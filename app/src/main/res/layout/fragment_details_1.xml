@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.splash_screen.fragments.DetailsFragment_1"
+    >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.splash_screen.SplashActivity">
+
+        <TextView
+            android:id="@+id/logoText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logo"
+            android:elevation="20dp"
+            android:transitionName="toDown"
+            android:textColor="@color/color_1"
+            android:textSize="100sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/club"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/club_house"
+            android:elevation="10dp"
+            android:transitionName="toDown"
+            android:textColor="@color/color_1"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/logoText"
+            app:layout_constraintStart_toStartOf="@+id/logoText"
+            app:layout_constraintTop_toBottomOf="@+id/logoText" />
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/robot"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:rotation="90"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/animationcircles" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

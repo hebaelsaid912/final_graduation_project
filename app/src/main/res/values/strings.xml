@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">GraduationProject</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="phone_num">Phone Num.</string>
+    <string name="phoneTerms">Accept terms conditions and policy.</string>
+    <string name="get_code">Get Code</string>
+    <string name="have_an_account_sign_in"> <u>Have an account? Sign in.</u></string>
+    <string name="enter_received_code">Enter received Code:</string>
+    <string name="confirm">Confirm</string>
+    <string name="club_house">Club House</string>
+    <string name="we_hope_you_enjoy_the_experience">We hope you enjoy the experience.</string>
+</resources>

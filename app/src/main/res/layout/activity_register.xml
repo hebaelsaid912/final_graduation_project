@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="com.example.android.graduationproject.ui.phone_verifying.RegisterViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:transitionName="openRegister"
+        tools:context=".ui.phone_verifying.RegisterActivity">
+
+        <ImageView
+            android:id="@+id/signup_backImageview"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:foregroundTint="@color/purple_700"
+            android:src="@drawable/arrow_back"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:fontFamily="sans-serif"
+            android:text="@string/sign_up"
+            android:textColor="@color/color_1"
+            android:textSize="30sp"
+            app:layout_constraintBottom_toBottomOf="@+id/signup_backImageview"
+            app:layout_constraintStart_toEndOf="@+id/signup_backImageview"
+            app:layout_constraintTop_toTopOf="@+id/signup_backImageview" />
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:text="Hello,\n We hope you enjoy the experience."
+            android:textColor="@color/color_2"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+        <LinearLayout
+            android:id="@+id/view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="30sp"
+            android:background="@drawable/white_backgrount"
+            android:orientation="vertical"
+            android:paddingStart="25dp"
+            android:paddingTop="50dp"
+            android:paddingEnd="25dp"
+            android:paddingBottom="50dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView4">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="10dp"
+                android:background="@drawable/enterphonetext_bg">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:hint="@string/phone_num"
+                    app:layout_constraintEnd_toEndOf="@+id/view"
+                    app:layout_constraintStart_toStartOf="@+id/view"
+                    app:layout_constraintTop_toTopOf="@+id/view">
+
+                    <com.hbb20.CountryCodePicker
+                        android:id="@+id/countrySpinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:ccp_autoDetectCountry="true"
+                        app:ccp_showPhoneCode="true"
+                        app:ccp_defaultNameCode="EG"
+                        app:ccp_textSize="20sp"
+                        app:layout_constraintBottom_toBottomOf="@+id/textInputLayout"
+                        app:layout_constraintEnd_toStartOf="@+id/textInputLayout"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/textInputLayout" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/signup_phoneNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:hint="@string/phone_num"
+                    app:layout_constraintEnd_toEndOf="@+id/view"
+                    app:layout_constraintStart_toStartOf="@+id/view"
+                    app:layout_constraintTop_toTopOf="@+id/view">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone"
+                        android:textSize="20sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/signup_acceptTerms"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/phoneTerms"
+                android:textColor="@color/color_2"
+                android:textSize="18sp"
+                app:layout_constraintStart_toStartOf="@+id/spinner"
+                app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/getcode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:background="@drawable/button_bg"
+            android:paddingStart="30dp"
+            android:paddingEnd="30dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:text="@string/get_code"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view" />
+
+        <TextView
+            android:id="@+id/haveAccountToSignIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:textColor="@color/color_2"
+            android:text="@string/have_an_account_sign_in"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="@+id/getcode"
+            app:layout_constraintStart_toStartOf="@+id/getcode"
+            app:layout_constraintTop_toBottomOf="@+id/getcode" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
