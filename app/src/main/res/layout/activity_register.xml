@@ -4,16 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-        <variable
-            name="viewModel"
-            type="com.example.android.graduationproject.ui.phone_verifying.RegisterViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:transitionName="openRegister"
-        tools:context=".ui.phone_verifying.RegisterActivity">
+        tools:context=".ui.phone_verifying.sendOtp.RegisterActivity">
 
         <ImageView
             android:id="@+id/signup_backImageview"
@@ -128,7 +125,7 @@
         </LinearLayout>
 
         <Button
-            android:id="@+id/getcode"
+            android:id="@+id/getCode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
@@ -152,9 +149,19 @@
             android:textColor="@color/color_2"
             android:text="@string/have_an_account_sign_in"
             android:textSize="20sp"
-            app:layout_constraintEnd_toEndOf="@+id/getcode"
-            app:layout_constraintStart_toStartOf="@+id/getcode"
-            app:layout_constraintTop_toBottomOf="@+id/getcode" />
+            app:layout_constraintEnd_toEndOf="@+id/getCode"
+            app:layout_constraintStart_toStartOf="@+id/getCode"
+            app:layout_constraintTop_toBottomOf="@+id/getCode" />
+
+        <ProgressBar
+            android:id="@+id/sendOTPCodeProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@+id/haveAccountToSignIn"
+            app:layout_constraintStart_toStartOf="@+id/haveAccountToSignIn"
+            app:layout_constraintTop_toBottomOf="@+id/haveAccountToSignIn" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.Home.Fragments.DashboardFragment">
+
+    <!-- TODO: Update blank fragment layout -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white">
+    <LinearLayout
+        android:id="@+id/helloName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hello "
+            android:textColor="@color/purple_500"
+            android:textSize="33sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/UserHomeName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Heba !"
+            android:textColor="@color/purple_500"
+            android:textSize="33sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/searchEditText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/search_background"
+        android:elevation="4dp"
+        android:hint="Search"
+        android:paddingStart="8dp"
+        android:paddingTop="5dp"
+        android:paddingEnd="250dp"
+        android:paddingBottom="5dp"
+        android:textSize="15sp"
+        app:layout_constraintStart_toStartOf="@+id/helloName"
+        app:layout_constraintTop_toBottomOf="@+id/helloName" />
+
+    <ImageButton
+        android:id="@+id/homeSearchBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:background="@color/white"
+        android:src="@drawable/search_icon"
+        android:tint="@color/purple_500"
+        app:layout_constraintBottom_toBottomOf="@+id/searchEditText"
+        app:layout_constraintStart_toEndOf="@+id/searchEditText"
+        app:layout_constraintTop_toBottomOf="@+id/helloName" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="DashBoard"
+            android:textSize="30sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/searchEditText" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>
