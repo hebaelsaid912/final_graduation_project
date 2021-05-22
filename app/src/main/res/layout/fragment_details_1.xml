@@ -12,6 +12,7 @@
         android:layout_height="match_parent"
         tools:context=".ui.splash_screen.SplashActivity">
 
+
         <TextView
             android:id="@+id/logoText"
             android:layout_width="wrap_content"

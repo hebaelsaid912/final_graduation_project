@@ -7,14 +7,15 @@
     <data>
         <variable
             name="viewModel"
-            type="com.example.android.graduationproject.ui.phone_verifying.RegisterViewModel" />
+            type="com.example.android.final_graduation_project.ui.phone_verifying.verifyCode.SetCodeViewModel"
+        />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="20dp"
-        tools:context=".ui.phone_verifying.DialogFragment">
+        tools:context=".ui.phone_verifying.verifyCode.DialogFragment">
 
         <TextView
             android:id="@+id/textView2"
@@ -33,7 +34,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:inputType="text"
-            android:text="@{viewModel.phoneNumMutableLiveData}"
+            android:text="@{viewModel.codeMutableLiveData}"
             android:textColor="@color/color_1"
             app:cursorColor="@color/color_1"
             app:hideLineWhenFilled="true"
@@ -48,10 +49,11 @@
             app:viewType="rectangle" />
 
         <Button
-            android:id="@+id/getcode"
+            android:id="@+id/confirmCode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20sp"
+            android:transitionName="openCreateUser"
             android:background="@drawable/button_bg"
             android:paddingStart="30dp"
             android:paddingTop="5dp"
