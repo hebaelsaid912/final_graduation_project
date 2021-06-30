@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.android.final_graduation_project" >
+    package="com.example.android.final_graduation_project">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -11,21 +11,23 @@
         android:resizeableActivity="false"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Final_Graduation_Project" >
-        <activity android:name=".ui.Home.HomeActivity" >
-
-        </activity>
-        <activity android:name=".ui.phone_verifying.createUser.CreateUserActivity" />
-        <activity android:name=".ui.phone_verifying.sendOtp.RegisterActivity" />
-        <activity
-            android:name=".ui.splash_screen.SplashActivity"
-            android:configChanges="orientation|screenSize" >
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/Theme.Final_Graduation_Project">
+        <activity android:name=".ui.home.fragments.rooms.get_room_info.ActiveRoomActivity"></activity>
+        <activity android:name=".IntroSplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.home.HomeActivity" />
+        <activity android:name=".ui.phone_verifying.createUser.CreateUserActivity" />
+        <activity android:name=".ui.phone_verifying.sendOtp.RegisterActivity" />
+        <activity
+            android:name=".ui.splash_screen.SplashActivity"
+            android:configChanges="orientation|screenSize"></activity>
     </application>
 
 </manifest>

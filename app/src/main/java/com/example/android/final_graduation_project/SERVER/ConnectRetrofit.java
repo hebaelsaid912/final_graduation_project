@@ -12,6 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ConnectRetrofit {
     private static Retrofit otp = null;
     private static Retrofit user = null;
+    private static Retrofit rooms = null;
 
     public static Retrofit getOTPResponse() {
         if (otp == null) {
@@ -33,5 +34,16 @@ public class ConnectRetrofit {
         }
         return user;
     }
+    public static Retrofit getRoomsResponse() {
+        if (rooms == null) {
+            rooms = new Retrofit.Builder()
+                    .baseUrl(URLs.ROOT_ROOMS)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .build();
+        }
+        return rooms;
+    }
+
 
 }

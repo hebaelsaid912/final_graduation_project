@@ -1,83 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".ui.Home.Fragments.DashboardFragment">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- TODO: Update blank fragment layout -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <data>
+
+    </data>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/white">
-    <LinearLayout
-        android:id="@+id/helloName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:layout_marginTop="30dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        tools:context=".ui.home.fragments.rooms.getRooms.DashboardFragment">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello "
-            android:textColor="@color/purple_500"
-            android:textSize="33sp"
-            android:textStyle="bold" />
+        <!-- TODO: Update blank fragment layout -->
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white">
 
-        <TextView
-            android:id="@+id/UserHomeName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Heba !"
-            android:textColor="@color/purple_500"
-            android:textSize="33sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </LinearLayout>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/searchEditText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:background="@drawable/search_background"
-        android:elevation="4dp"
-        android:hint="Search"
-        android:paddingStart="8dp"
-        android:paddingTop="5dp"
-        android:paddingEnd="250dp"
-        android:paddingBottom="5dp"
-        android:textSize="15sp"
-        app:layout_constraintStart_toStartOf="@+id/helloName"
-        app:layout_constraintTop_toBottomOf="@+id/helloName" />
+                <EditText
+                    android:id="@+id/searchEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="@drawable/search_background"
+                    android:elevation="4dp"
+                    android:hint="Search"
+                    android:paddingStart="8dp"
+                    android:paddingTop="5dp"
+                    android:paddingEnd="250dp"
+                    android:paddingBottom="5dp"
+                    android:textSize="15sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageButton
-        android:id="@+id/homeSearchBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:background="@color/white"
-        android:src="@drawable/search_icon"
-        android:tint="@color/purple_500"
-        app:layout_constraintBottom_toBottomOf="@+id/searchEditText"
-        app:layout_constraintStart_toEndOf="@+id/searchEditText"
-        app:layout_constraintTop_toBottomOf="@+id/helloName" />
+                <com.facebook.shimmer.ShimmerFrameLayout
+                    android:id="@+id/shimmerEffect_rooms"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="20dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/searchEditText">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="DashBoard"
-            android:textSize="30sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/searchEditText" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
-</FrameLayout>
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+
+                        <include layout="@layout/shimmereffect_rooms_rv" />
+                    </LinearLayout>
+                </com.facebook.shimmer.ShimmerFrameLayout>
+
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/getRooms_rv"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="70dp"
+                    android:layout_marginEnd="10dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="1.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/searchEditText"
+                    app:layout_constraintVertical_bias="0.0"
+                    tools:listitem="@layout/rooms_list_items" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/createNewRoom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|right"
+                android:layout_margin="20dp"
+                android:backgroundTint="@color/white"
+                android:src="@drawable/plus"
+                android:tint="@color/color_1" />
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    </FrameLayout>
+</layout>

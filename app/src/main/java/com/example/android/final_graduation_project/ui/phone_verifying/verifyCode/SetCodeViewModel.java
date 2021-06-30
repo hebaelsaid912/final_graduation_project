@@ -5,9 +5,6 @@ import android.util.Log;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import io.reactivex.Observable;
-import io.reactivex.Observer;
-
 public class SetCodeViewModel extends ViewModel {
     private String TOAST_TAG = "SendOTP";
     public MutableLiveData<String> codeMutableLiveData = new MutableLiveData<>();

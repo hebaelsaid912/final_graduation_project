@@ -5,7 +5,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +19,6 @@ import com.example.android.final_graduation_project.pojo.OTP.SendOTPCodeSuccessf
 import com.example.android.final_graduation_project.databinding.ActivityRegisterBinding;
 import com.example.android.final_graduation_project.StatusBar;
 import com.example.android.final_graduation_project.ui.phone_verifying.verifyCode.DialogFragment;
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.HashMap;
 
@@ -33,13 +31,14 @@ public class RegisterActivity extends AppCompatActivity {
     ActivityRegisterBinding binding;
     DialogFragment fragment;
     RegisterViewModel registerViewModel;
-    HashMap<Object , Object> sendCodeHashMap;
+    HashMap<Object, Object> sendCodeHashMap;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-         binding =
+        binding =
                 DataBindingUtil.setContentView(this, R.layout.activity_register);
-        new StatusBar(this,R.color.browser_actions_bg_grey);
+        new StatusBar(this, R.color.browser_actions_bg_grey);
         registerViewModel = new ViewModelProvider(this).get(RegisterViewModel.class);
         binding.getCode.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -47,7 +46,7 @@ public class RegisterActivity extends AppCompatActivity {
                 requestPermissions();
                 String phoneNo = binding.signupPhoneNumber.getEditText().getText().toString().trim();
                 sendCodeHashMap = new HashMap<>();
-                sendCodeHashMap.put("phone",phoneNo);
+                sendCodeHashMap.put("phone", phoneNo);
                 registerViewModel.setCode(sendCodeHashMap);
                 binding.sendOTPCodeProgressBar.setVisibility(View.VISIBLE);
             }
@@ -55,17 +54,17 @@ public class RegisterActivity extends AppCompatActivity {
         registerViewModel.phoneNumMutableLiveData.observe(this, new Observer<SendOTPCodeSuccessfully>() {
             @Override
             public void onChanged(SendOTPCodeSuccessfully sendOTPCodeSuccessfully) {
-                if (registerViewModel.phoneNumMutableLiveData.getValue().getCode() == SUCCESS_CODE){
+                if (registerViewModel.phoneNumMutableLiveData.getValue().getCode() == SUCCESS_CODE) {
                     Toast.makeText(getBaseContext(), registerViewModel.phoneNumMutableLiveData.getValue().getMessage()
                             , Toast.LENGTH_LONG).show();
                     fragment = DialogFragment.newInstance(sendCodeHashMap.get("phone").toString(),
                             registerViewModel.phoneNumMutableLiveData.getValue().getCode(), "555555");
                     fragment.show(getSupportFragmentManager(), null);
                     binding.sendOTPCodeProgressBar.setVisibility(View.GONE);
-                }else{
+                } else {
                     Toast.makeText(getBaseContext(), registerViewModel.phoneNumMutableLiveData.getValue().getMessage()
                             , Toast.LENGTH_LONG).show();
-                    Toast.makeText(getBaseContext(), "Phone must be exactly 11 digits ", Toast.LENGTH_LONG).show();
+                    // Toast.makeText(getBaseContext(), "Phone must be exactly 11 digits ", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -98,7 +97,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        Log.i(TOAST_TAG,"back to register activity ");
+        Log.i(TOAST_TAG, "back to register activity ");
         binding.signupPhoneNumber.getEditText().setText("");
     }
 

@@ -1,32 +1,37 @@
-package com.example.android.final_graduation_project.ui.Home;
+package com.example.android.final_graduation_project.ui.home;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.ColorRes;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 
-import com.example.android.final_graduation_project.ui.Home.Drawer.SpaceItem;
-import com.example.android.final_graduation_project.ui.Home.Fragments.AboutUsFragment;
-import com.example.android.final_graduation_project.ui.Home.Fragments.ActiveRoomsFragment;
-import com.example.android.final_graduation_project.ui.Home.Fragments.DashboardFragment;
-import com.example.android.final_graduation_project.ui.Home.Drawer.DrawerAdapter;
-import com.example.android.final_graduation_project.ui.Home.Drawer.DrawerItem;
-import com.example.android.final_graduation_project.ui.Home.Drawer.SimpleItem;
-import com.example.android.final_graduation_project.ui.Home.Fragments.FollowerRoomsFragment;
-import com.example.android.final_graduation_project.ui.Home.Fragments.ProfileFragment;
+import com.example.android.final_graduation_project.SessionManager;
+import com.example.android.final_graduation_project.ui.home.Drawer.SpaceItem;
+import com.example.android.final_graduation_project.ui.home.fragments.AboutUsFragment;
+import com.example.android.final_graduation_project.ui.home.fragments.ActiveRoomsFragment;
+import com.example.android.final_graduation_project.ui.home.fragments.rooms.getRooms.DashboardFragment;
+import com.example.android.final_graduation_project.ui.home.Drawer.DrawerAdapter;
+import com.example.android.final_graduation_project.ui.home.Drawer.DrawerItem;
+import com.example.android.final_graduation_project.ui.home.Drawer.SimpleItem;
+import com.example.android.final_graduation_project.ui.home.fragments.FollowerRoomsFragment;
+import com.example.android.final_graduation_project.ui.home.fragments.ProfileFragment;
 import com.example.android.final_graduation_project.R;
-import com.example.android.final_graduation_project.ui.Home.Fragments.SettingFragment;
+import com.example.android.final_graduation_project.ui.home.fragments.SettingFragment;
 import com.example.android.final_graduation_project.StatusBar;
 import com.example.android.final_graduation_project.databinding.ActivityHomeBinding;
+import com.example.android.final_graduation_project.ui.phone_verifying.sendOtp.RegisterActivity;
 import com.yarolegovich.slidingrootnav.SlidingRootNav;
 import com.yarolegovich.slidingrootnav.SlidingRootNavBuilder;
 
@@ -53,6 +58,7 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
         ActivityHomeBinding binding = DataBindingUtil.setContentView(this,R.layout.activity_home);
         new StatusBar(this , R.color.white);
         setSupportActionBar(binding.toolbar2);
+        //getActionBar().setDisplayShowTitleEnabled(false);
         slidingRootNav = new SlidingRootNavBuilder(this)
                 .withToolbarMenuToggle(binding.toolbar2)
                 .withMenuOpened(false)
@@ -115,7 +121,10 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
 
     @Override
     public void onBackPressed() {
-        finish();
+        Intent a = new Intent(Intent.ACTION_MAIN);
+        a.addCategory(Intent.CATEGORY_HOME);
+        a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(a);
     }
 
     @Override
@@ -149,6 +158,9 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
                 break;
         }
         if(position == POS_LOGOUT){
+            SessionManager.logoutUserSession();
+            Intent intent = new Intent(this , RegisterActivity.class);
+            startActivity(intent);
             finish();
         }
         slidingRootNav.closeMenu();
@@ -159,4 +171,15 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
                 .replace(R.id.container, fragment)
                 .commit();
     }*/
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_home, menu);
+        if(menu instanceof MenuBuilder){
+            MenuBuilder m = (MenuBuilder) menu;
+            m.setOptionalIconsVisible(true);
+        }
+        return true;
+    }
+
 }

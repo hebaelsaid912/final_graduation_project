@@ -1,7 +1,6 @@
 package com.example.android.final_graduation_project.ui.phone_verifying.sendOtp;
 
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;

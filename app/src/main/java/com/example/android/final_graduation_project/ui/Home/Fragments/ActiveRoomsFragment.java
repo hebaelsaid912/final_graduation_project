@@ -1,4 +1,4 @@
-package com.example.android.final_graduation_project.ui.Home.Fragments;
+package com.example.android.final_graduation_project.ui.home.fragments;
 
 import android.os.Bundle;
 

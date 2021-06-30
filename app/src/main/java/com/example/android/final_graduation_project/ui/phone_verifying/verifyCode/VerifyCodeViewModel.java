@@ -40,6 +40,11 @@ public class VerifyCodeViewModel extends ViewModel {
                     Log.i(TOAST_TAG,verifyCodeMutableLiveData.getValue().getCode()+"");
                     Log.i(TOAST_TAG,verifyCodeMutableLiveData.getValue().getStatus()+"");
                     Log.i(TOAST_TAG,verifyCodeMutableLiveData.getValue().getMessage()+"");
+                    Log.i(TOAST_TAG,verifyCodeMutableLiveData.getValue().getData().getRefreshToken()+"");
+                    Log.i(TOAST_TAG,verifyCodeMutableLiveData.getValue().getData().getToken()+"");
+                    Log.i(TOAST_TAG,"accout"+verifyCodeMutableLiveData.getValue().getData().getAccountVerified()+"");
+
+
                 }else{
                     Log.i(TOAST_TAG,"onError : verifyOTPCode is null");
                 }

@@ -12,7 +12,7 @@ import retrofit2.http.POST;
 
 public interface User_ApiInterface {
     @Headers("name: Authorization")
-    @POST("user/create")
+    @POST("create")
     public Observable<User> setUserData(@Header("Authorization") String token ,
                                         @Body HashMap<String,Object> userData);
 }

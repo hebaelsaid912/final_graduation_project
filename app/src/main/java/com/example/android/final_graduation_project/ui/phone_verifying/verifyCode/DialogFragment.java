@@ -1,7 +1,6 @@
 package com.example.android.final_graduation_project.ui.phone_verifying.verifyCode;
 
 import android.app.ActivityOptions;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,20 +16,15 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.android.final_graduation_project.R;
-import com.example.android.final_graduation_project.SERVER.ConnectRetrofit;
 import com.example.android.final_graduation_project.pojo.OTP.VerifyOTPCode;
 import com.example.android.final_graduation_project.SERVER.otp.Phone_ApiInterface;
 import com.example.android.final_graduation_project.databinding.FragmentDialogBinding;
 import com.example.android.final_graduation_project.ui.phone_verifying.createUser.CreateUserActivity;
-import com.example.android.final_graduation_project.ui.phone_verifying.sendOtp.RegisterViewModel;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class DialogFragment extends androidx.fragment.app.DialogFragment {
@@ -43,19 +37,21 @@ public class DialogFragment extends androidx.fragment.app.DialogFragment {
     private static final String ARG_VERIFYING_OTP_CODE = "otpCode";
 
     private static final int VERIFYING_CODE = 200;
-    private int flag = 0;
 
     private String mVerifying_phone;
     private int mVerifying_code ;
     private String mVerifying_otpCode ;
+    private String mHasAccount ;
     private HashMap<String , Object> data;
     Retrofit retrofit;
     Phone_ApiInterface phone_apiInterface;
     FragmentDialogBinding binding;
     SetCodeViewModel setCodeViewModel;
     VerifyCodeViewModel verifyCodeViewModel;
+    //local variable
     String apiToken;
     String refreshToken;
+    boolean hasAccount = false;
 
     public DialogFragment() {
 
@@ -122,16 +118,16 @@ public class DialogFragment extends androidx.fragment.app.DialogFragment {
                             verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getMessage(),
                             Toast.LENGTH_LONG).show();
                     apiToken = verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getData().getToken();
-                    refreshToken = verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getData().getToken();
-                    Intent intent = new Intent(getActivity().getBaseContext() , CreateUserActivity.class);
-                    intent.putExtra("token", apiToken);
-                    intent.putExtra("refreshToken", refreshToken);
-                    Pair[] pairs = new Pair[1];
-                    pairs[0] =new Pair<View,String>(binding.confirmCode,"openCreateUser");
-                    ActivityOptions options =ActivityOptions.makeSceneTransitionAnimation(getActivity(),pairs);
-                    startActivity(intent,options.toBundle());
-                    dismiss();
+                    refreshToken = verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getData().getRefreshToken();
+                    hasAccount = verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getData().getAccountVerified();
+                    Log.i(TOAST_TAG,"accountVerified : "+hasAccount+"");
 
+                    toCreateAccount(apiToken , refreshToken , hasAccount);
+
+                }else if(verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getCode()==403){
+                    Toast.makeText(getActivity().getBaseContext(),
+                            verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getMessage(),
+                            Toast.LENGTH_LONG).show();
                 }else{
                     Toast.makeText(getActivity().getBaseContext(),
                             verifyCodeViewModel.verifyCodeMutableLiveData.getValue().getMessage(),
@@ -141,6 +137,30 @@ public class DialogFragment extends androidx.fragment.app.DialogFragment {
         });
         return binding.getRoot();
     }
+    void toCreateAccount(String apiToken ,String refreshToken , boolean hasAccount){
+        Intent intent = new Intent(getActivity().getBaseContext(), CreateUserActivity.class);
+        intent.putExtra("token", apiToken);
+        intent.putExtra("refreshToken", refreshToken);
+        intent.putExtra("accountVerified", hasAccount);
+        Pair[] pairs = new Pair[1];
+        pairs[0] = new Pair<View, String>(binding.confirmCode, "openCreateUser");
+        ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(getActivity(), pairs);
+        startActivity(intent, options.toBundle());
+        dismiss();
+    }
+   /* */
+  /*  void toHomeActivity(){
+        SessionManager startSession = new SessionManager(getActivity().getBaseContext());
+        startSession.createLoginSession(refreshToken , hasAccount);
+        Intent intent = new Intent(getActivity().getBaseContext(), HomeActivity.class);
+        intent.putExtra("token", apiToken);
+        intent.putExtra("refreshToken", refreshToken);
+        Pair[] pairs = new Pair[1];
+        pairs[0] = new Pair<View, String>(binding.confirmCode, "openHome");
+        ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(getActivity(), pairs);
+        startActivity(intent, options.toBundle());
+        dismiss();
+    }*/
 
 
     /* @Override
