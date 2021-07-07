@@ -98,10 +98,14 @@ public class DialogFragment extends androidx.fragment.app.DialogFragment {
         binding.setLifecycleOwner(this);
         binding.setViewModel(setCodeViewModel);
         binding.executePendingBindings();
+       // binding.pinView.setEnabled(true);
+        //binding.pinView.beginBatchEdit();
+        Log.d(TOAST_TAG , binding.pinView.isInEditMode() + "  " + binding.pinView.isEnabled());
         binding.confirmCode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String s = binding.pinView.getText().toString().trim();
+               // setCodeViewModel.verifyCode(s+"");
                 if(s.equals(mVerifying_otpCode)) {
                     verifyCodeViewModel.verifyCode(data);
                 }else{

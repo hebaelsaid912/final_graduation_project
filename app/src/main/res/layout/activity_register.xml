@@ -10,12 +10,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:transitionName="openRegister"
+        android:background="@color/gray"
         tools:context=".ui.phone_verifying.sendOtp.RegisterActivity">
 
         <ImageView
             android:id="@+id/signup_backImageview"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="40dp"
             android:layout_marginStart="20dp"
             android:layout_marginTop="20dp"
             android:foregroundTint="@color/purple_700"
@@ -31,44 +32,44 @@
             android:fontFamily="sans-serif"
             android:text="@string/sign_up"
             android:textColor="@color/color_1"
-            android:textSize="30sp"
+            android:textSize="26sp"
             app:layout_constraintBottom_toBottomOf="@+id/signup_backImageview"
             app:layout_constraintStart_toEndOf="@+id/signup_backImageview"
             app:layout_constraintTop_toTopOf="@+id/signup_backImageview" />
-
-        <TextView
-            android:id="@+id/textView4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="20dp"
-            android:text="Hello,\n We hope you enjoy the experience."
-            android:textColor="@color/color_2"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView" />
 
         <LinearLayout
             android:id="@+id/view"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="30sp"
             android:background="@drawable/white_backgrount"
             android:orientation="vertical"
+            android:layout_marginTop="150dp"
             android:paddingStart="25dp"
             android:paddingTop="50dp"
             android:paddingEnd="25dp"
             android:paddingBottom="50dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView4">
+            app:layout_constraintTop_toBottomOf="@+id/textView">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|left"
+                android:textStyle="bold"
+                android:textColor="@color/purple_500"
+                android:text="Your phone !"
+                android:textSize="30sp"
+                android:layout_marginBottom="20dp"
+                />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/enterphonetext_bg"
                 android:orientation="horizontal"
-                android:padding="10dp"
-                android:background="@drawable/enterphonetext_bg">
+                android:layout_gravity="bottom"
+                android:padding="10dp">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
@@ -84,8 +85,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:ccp_autoDetectCountry="true"
-                        app:ccp_showPhoneCode="true"
                         app:ccp_defaultNameCode="EG"
+                        app:ccp_showPhoneCode="true"
                         app:ccp_textSize="20sp"
                         app:layout_constraintBottom_toBottomOf="@+id/textInputLayout"
                         app:layout_constraintEnd_toStartOf="@+id/textInputLayout"
@@ -100,6 +101,7 @@
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:hint="@string/phone_num"
+                    android:background="@color/gray"
                     app:layout_constraintEnd_toEndOf="@+id/view"
                     app:layout_constraintStart_toStartOf="@+id/view"
                     app:layout_constraintTop_toTopOf="@+id/view">
@@ -112,16 +114,6 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
-            <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/signup_acceptTerms"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/phoneTerms"
-                android:textColor="@color/color_2"
-                android:textSize="18sp"
-                app:layout_constraintStart_toStartOf="@+id/spinner"
-                app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
         </LinearLayout>
 
         <Button
@@ -141,27 +133,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/view" />
 
-        <TextView
-            android:id="@+id/haveAccountToSignIn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:textColor="@color/color_2"
-            android:text="@string/have_an_account_sign_in"
-            android:textSize="20sp"
-            app:layout_constraintEnd_toEndOf="@+id/getCode"
-            app:layout_constraintStart_toStartOf="@+id/getCode"
-            app:layout_constraintTop_toBottomOf="@+id/getCode" />
-
         <ProgressBar
             android:id="@+id/sendOTPCodeProgressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
             android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="@+id/haveAccountToSignIn"
-            app:layout_constraintStart_toStartOf="@+id/haveAccountToSignIn"
-            app:layout_constraintTop_toBottomOf="@+id/haveAccountToSignIn" />
+            app:layout_constraintEnd_toEndOf="@+id/getCode"
+            app:layout_constraintStart_toStartOf="@+id/getCode"
+            app:layout_constraintTop_toBottomOf="@+id/getCode" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

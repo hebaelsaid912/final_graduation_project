@@ -18,76 +18,82 @@
             android:layout_height="match_parent"
             android:background="@color/white">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/refreshGetRooms"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <EditText
-                    android:id="@+id/searchEditText"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginEnd="20dp"
-                    android:background="@drawable/search_background"
-                    android:elevation="4dp"
-                    android:hint="Search"
-                    android:paddingStart="8dp"
-                    android:paddingTop="5dp"
-                    android:paddingEnd="250dp"
-                    android:paddingBottom="5dp"
-                    android:textSize="15sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    android:layout_height="match_parent">
 
-                <com.facebook.shimmer.ShimmerFrameLayout
-                    android:id="@+id/shimmerEffect_rooms"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="20dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/searchEditText">
-
-                    <LinearLayout
+                    <EditText
+                        android:id="@+id/searchEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="@drawable/search_background"
+                        android:elevation="4dp"
+                        android:hint="Search"
+                        android:paddingStart="8dp"
+                        android:paddingTop="5dp"
+                        android:paddingEnd="250dp"
+                        android:paddingBottom="5dp"
+                        android:textSize="15sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
+                    <com.facebook.shimmer.ShimmerFrameLayout
+                        android:id="@+id/shimmerEffect_rooms"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="20dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/searchEditText">
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
+                            <include layout="@layout/shimmereffect_rooms_rv" />
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
+                            <include layout="@layout/shimmereffect_rooms_rv" />
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
+                            <include layout="@layout/shimmereffect_rooms_rv" />
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
+                            <include layout="@layout/shimmereffect_rooms_rv" />
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
+                            <include layout="@layout/shimmereffect_rooms_rv" />
 
-                        <include layout="@layout/shimmereffect_rooms_rv" />
-                    </LinearLayout>
-                </com.facebook.shimmer.ShimmerFrameLayout>
+                            <include layout="@layout/shimmereffect_rooms_rv" />
 
+                            <include layout="@layout/shimmereffect_rooms_rv" />
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/getRooms_rv"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="70dp"
-                    android:layout_marginEnd="10dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="1.0"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/searchEditText"
-                    app:layout_constraintVertical_bias="0.0"
-                    tools:listitem="@layout/rooms_list_items" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                            <include layout="@layout/shimmereffect_rooms_rv" />
+                        </LinearLayout>
+                    </com.facebook.shimmer.ShimmerFrameLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/getRooms_rv"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="70dp"
+                        android:layout_marginEnd="10dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="1.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/searchEditText"
+                        app:layout_constraintVertical_bias="0.0"
+                        tools:listitem="@layout/rooms_list_items" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton

@@ -47,7 +47,7 @@ public class SessionManager {
     }
 
     public static String getAccessToken() {
-        return userSession.getString(KEY_ACCESS_TOKEN, null);
+        return userSession.getString(KEY_ACCESS_TOKEN, "");
     }
     public static String getRefreshToken() {
         return userSession.getString(KEY_REFRESH_TOKEN, null);

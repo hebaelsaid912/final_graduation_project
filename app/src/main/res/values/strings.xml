@@ -3,7 +3,7 @@
     //custom
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="sign_up">Sign Up</string>
-    <string name="phone_num">Phone Num.</string>
+    <string name="phone_num">enter number</string>
     <string name="phoneTerms">Accept terms conditions and policy.</string>
     <string name="get_code">Get Code</string>
     <string name="have_an_account_sign_in"> <u>Have an account? Sign in.</u></string>

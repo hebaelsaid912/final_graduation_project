@@ -133,7 +133,8 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
         Log.i("Home Drawer " , position+"");
         switch (position){
             case POS_DASHBOARD:
-                DashboardFragment tab1 = new DashboardFragment();
+                DashboardFragment tab1 = DashboardFragment.newInstance(SessionManager.getAccessToken());
+                //DashboardFragment.newInstance(SessionManager.getAccessToken());
                 transaction.replace(R.id.container , tab1);
                 break;
             case POS_MY_PROFILE:
