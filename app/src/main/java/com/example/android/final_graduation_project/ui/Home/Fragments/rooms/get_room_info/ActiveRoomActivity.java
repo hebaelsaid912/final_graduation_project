@@ -1,6 +1,5 @@
 package com.example.android.final_graduation_project.ui.home.fragments.rooms.get_room_info;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -13,13 +12,9 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.telephony.mbms.MbmsErrors;
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
@@ -32,22 +27,16 @@ import com.example.android.final_graduation_project.SessionManager;
 import com.example.android.final_graduation_project.StatusBar;
 import com.example.android.final_graduation_project.databinding.ActivityActiveRoomBinding;
 import com.example.android.final_graduation_project.pojo.Rooms.endRoom.EndRoom;
-import com.example.android.final_graduation_project.pojo.Rooms.getRoomInfo.AudienceList;
 import com.example.android.final_graduation_project.pojo.Rooms.getRoomInfo.RoomInfo;
-import com.example.android.final_graduation_project.pojo.Rooms.getRoomInfo.SpeakersList;
 import com.example.android.final_graduation_project.pojo.Rooms.leaveRoom.LeaveRoom;
-import com.example.android.final_graduation_project.pojo.SocketIOResponses.JoinRoomResponse;
 import com.example.android.final_graduation_project.pojo.SocketIOResponses.LeaveRoomResponse;
-import com.example.android.final_graduation_project.pojo.SocketIOResponses.WantToSpeakeResponse;
 import com.example.android.final_graduation_project.pojo.UserInfo.UserInformation;
-import com.example.android.final_graduation_project.ui.home.fragments.rooms.getRooms.OnItemClickListener;
 import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
-import org.webrtc.ContextUtils;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
@@ -60,14 +49,19 @@ import java.util.List;
 
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-import okhttp3.internal.Util;
 
-import org.webrtc.MediaConstraints;
 import org.webrtc.SessionDescription;
 
 public class ActiveRoomActivity extends AppCompatActivity {
     ActivityActiveRoomBinding activityActiveRoomBinding;
     ActiveRoomViewModel roomInfoViewModel;
+    //create or join socket io
+    private String CHANNEL_ON_CREATE_ROOM = "created";
+    private String CHANNEL_ON_JOIN_ROOM = "join";
+    private String CHANNEL_ON_JOINED_ROOM = "joined";
+    private String CHANNEL_MESSAGE = "message";
+    private String CHANNEL_FULL = "full";
+    private String CHANNEL_BYE_EVENT = "bye";
     //leave socket io
     private String CHANNEL_ON_REFRESH = "refresh";
     private String CHANNEL_REQUSTE_TO_LEAVE_ROOM = "leave";
@@ -95,12 +89,17 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
     //webRtc
     private MediaConstraints sdpConstraints;
+    private MediaConstraints audioConstraints ;
     private PeerConnection localPeer;
     private PeerConnection remotePeer;
     private PeerConnectionFactory peerConnectionFactory;
     private AudioTrack localAudioTrack;
+    private AudioSource audioSource;
     private String recordPermission = Manifest.permission.RECORD_AUDIO;
     private int permissionCode = 21;
+    private List<PeerConnection.IceServer> iceServers;
+    private boolean gotUserMedia;
+
 
     private String TOAST_TAG = "GetRoomInfo";
     private static final String ARG_ACCESS_TOKEN = "accessToken";
@@ -134,7 +133,46 @@ public class ActiveRoomActivity extends AppCompatActivity {
         getRoomInfoSocket.on(CHANNEL_NOTHING_HAPPEND, onNoThingHappend);
         getRoomInfoSocket.on(CHANNEL_LISTEN_IF_MEMBER_CAN_SPEAK, onIfCanSpeak);
         getRoomInfoSocket.on(CHANNEL_LISTEN_IF_MODERATOR_CANCEL_MEMBER_REQUEST, onIfModeratorCancelMemberRequst);
+        //webRTC
+        //room created event.
+        getRoomInfoSocket.on(CHANNEL_ON_CREATE_ROOM,onCreatedRoom);
+        //peer joined event
+        getRoomInfoSocket.on(CHANNEL_ON_JOIN_ROOM, onNewPeerJoined);
+        //when you joined a chat room successfully
+        getRoomInfoSocket.on(CHANNEL_ON_JOINED_ROOM,onJoinedRoom);
+        //bye event
+        getRoomInfoSocket.on(CHANNEL_BYE_EVENT, onRemoteHangUp);
+        //messages - SDP and ICE candidates are transferred through this
+        getRoomInfoSocket.on(CHANNEL_MESSAGE, args -> {
+            Log.i(TOAST_TAG,CHANNEL_ON_JOINED_ROOM+" : "+args[0].toString()+"");
+            if (args[0] instanceof String) {
+                Log.d("SignallingClient", "String received :: " + args[0]);
+                String data = (String) args[0];
+                if (data.equalsIgnoreCase("got user media")) {
+                    onTryToStart();
+                }
+                if (data.equalsIgnoreCase("bye")) {
+                    onRemoteHangUp(data);
+                }
+            } else if (args[0] instanceof JSONObject) {
+                try {
 
+                    JSONObject data = (JSONObject) args[0];
+                    Log.d("SignallingClient", "Json Received :: " + data.toString());
+                    String type = data.getString("type");
+                    if (type.equalsIgnoreCase("offer")) {
+                        onOfferReceived(data);
+                    } else if (type.equalsIgnoreCase("answer") ) {
+                        onAnswerReceived(data);
+                    } else if (type.equalsIgnoreCase("candidate") ) {
+                        onIceCandidateReceived(data);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         accessToken = getIntent().getStringExtra(ARG_ACCESS_TOKEN);
         roomId = getIntent().getStringExtra(ARG_ROOM_ID);
@@ -184,6 +222,8 @@ public class ActiveRoomActivity extends AppCompatActivity {
                                             activityActiveRoomBinding.EndRoom.setVisibility(View.VISIBLE);
                                             activityActiveRoomBinding.micOff.setVisibility(View.VISIBLE);
                                             activityActiveRoomBinding.acceptMemberAsk.setVisibility(View.VISIBLE);
+                                            checkPermission();
+                                            start();
                                             activityActiveRoomBinding.EndRoom.setOnClickListener(new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View view) {
@@ -397,8 +437,6 @@ public class ActiveRoomActivity extends AppCompatActivity {
             }
         });
 
-        checkPermission();
-        start();
     }
     private boolean checkPermission() {
         if (ActivityCompat.checkSelfPermission(getBaseContext(), recordPermission) == PackageManager.PERMISSION_GRANTED) {
@@ -611,15 +649,137 @@ public class ActiveRoomActivity extends AppCompatActivity {
             }
         }
     };
+    private Emitter.Listener onCreatedRoom= new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TOAST_TAG,CHANNEL_ON_CREATE_ROOM+" : "+args[0].toString()+"");
+                    try {
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        Toast.makeText(getBaseContext(), jsonObject.getString("message") , Toast.LENGTH_LONG).show();
+                        if (gotUserMedia) {
+                            getRoomInfoSocket.emit(CHANNEL_MESSAGE, "got user media");
+                        }
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    };
+    private Emitter.Listener onNewPeerJoined= new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TOAST_TAG,CHANNEL_ON_JOIN_ROOM+" : "+args[0].toString()+"");
+                    try{
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        Toast.makeText(getBaseContext(),jsonObject.getString("message") + gotUserMedia,Toast.LENGTH_LONG).show();
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+
+        }
+    };
+    private Emitter.Listener onJoinedRoom= new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TOAST_TAG,CHANNEL_ON_JOINED_ROOM+" : "+args[0].toString()+"");
+                    try {
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        Toast.makeText(getBaseContext(), jsonObject.getString("message")  + gotUserMedia, Toast.LENGTH_LONG).show();
+                        if (gotUserMedia) {
+                            //SignallingClient.getInstance().emitMessage("got user media");
+                            getRoomInfoSocket.emit(CHANNEL_MESSAGE, "got user media");
+                        }
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
+    };
+    //webRTC
+    private Emitter.Listener onRoomFull= new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TOAST_TAG,CHANNEL_ON_JOINED_ROOM+" : "+args[0].toString()+"");
+                    try {
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        Toast.makeText(getBaseContext(), jsonObject.getString("message")  + gotUserMedia, Toast.LENGTH_LONG).show();
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
+    };
+    private Emitter.Listener onRemoteHangUp= new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TOAST_TAG,CHANNEL_ON_JOINED_ROOM+" : "+args[0].toString()+"");
+                    try {
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        Toast.makeText(getBaseContext(), jsonObject.getString("message")  + gotUserMedia, Toast.LENGTH_LONG).show();
+                        hangup();
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
+    };
+    /*private Emitter.Listener onOfferReceived= new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TOAST_TAG,CHANNEL_ON_JOINED_ROOM+" : "+args[0].toString()+"");
+                    try {
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        Toast.makeText(getBaseContext(), jsonObject.getString("message")  + gotUserMedia, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getBaseContext(),"Received Offer",Toast.LENGTH_LONG).show();
+                        onTryToStart();
+                        localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"), new SessionDescription(SessionDescription.Type.OFFER, data.getString("sdp")));
+                        doAnswer();
+
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
+    };*/
 
     private void start() {
         if (checkPermission()) {
             initializePeerConnectionFactory();
-
         } else {
             Toast.makeText(this, "Need some permissions", Toast.LENGTH_LONG).show();
         }
     }
+
     private void initializePeerConnectionFactory() {
         //Initialize PeerConnectionFactory globals.
         //Params are context, initAudio,initVideo and videoCodecHwAcceleration
@@ -630,75 +790,16 @@ public class ActiveRoomActivity extends AppCompatActivity {
         PeerConnectionFactory peerConnectionFactory = new PeerConnectionFactory(options);
 
         //Create MediaConstraints - Will be useful for specifying video and audio constraints. More on this later!
-        MediaConstraints constraints = new MediaConstraints();
+        audioConstraints = new MediaConstraints();
 
         //create an AudioSource instance
-        AudioSource audioSource = peerConnectionFactory.createAudioSource(constraints);
+        audioSource = peerConnectionFactory.createAudioSource(audioConstraints);
         localAudioTrack = peerConnectionFactory.createAudioTrack("101", audioSource);
 
+        gotUserMedia = true;
+
     }
-    private void call() {
-        //we already have video and audio tracks. Now create peerconnections
-        List<PeerConnection.IceServer> iceServers = new ArrayList<>();
 
-        //create sdpConstraints
-        sdpConstraints = new MediaConstraints();
-        sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair("offerToReceiveAudio", "true"));
-        sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair("offerToReceiveVideo", "true"));
-
-        //creating localPeer
-        localPeer = peerConnectionFactory.createPeerConnection(iceServers, sdpConstraints, new CustomPeerConnectionObserver("localPeerCreation") {
-            @Override
-            public void onIceCandidate(IceCandidate iceCandidate) {
-                super.onIceCandidate(iceCandidate);
-                onIceCandidateReceived(localPeer, iceCandidate);
-            }
-        });
-
-        //creating remotePeer
-        remotePeer = peerConnectionFactory.createPeerConnection(iceServers, sdpConstraints, new CustomPeerConnectionObserver("remotePeerCreation") {
-
-            @Override
-            public void onIceCandidate(IceCandidate iceCandidate) {
-                super.onIceCandidate(iceCandidate);
-                onIceCandidateReceived(remotePeer, iceCandidate);
-            }
-
-            @Override
-            public void onAddStream(MediaStream mediaStream) {
-                super.onAddStream(mediaStream);
-                gotRemoteStream(mediaStream);
-            }
-        });
-
-        //creating local mediastream
-        MediaStream stream = peerConnectionFactory.createLocalMediaStream("102");
-        stream.addTrack(localAudioTrack);
-        //stream.addTrack(localVideoTrack);
-        localPeer.addStream(stream);
-
-        //creating Offer
-        localPeer.createOffer(new CustomSdpObserver("localCreateOffer"){
-            @Override
-            public void onCreateSuccess(SessionDescription sessionDescription) {
-                //we have localOffer. Set it as local desc for localpeer and remote desc for remote peer.
-                //try to create answer from the remote peer.
-                super.onCreateSuccess(sessionDescription);
-                localPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"), sessionDescription);
-                remotePeer.setRemoteDescription(new CustomSdpObserver("remoteSetRemoteDesc"), sessionDescription);
-                remotePeer.createAnswer(new CustomSdpObserver("remoteCreateOffer") {
-
-                    @Override
-                    public void onCreateSuccess(SessionDescription sessionDescription) {
-                        //remote answer generated. Now set it as local desc for remote peer and remote desc for local peer.
-                        super.onCreateSuccess(sessionDescription);
-                        remotePeer.setLocalDescription(new CustomSdpObserver("remoteSetLocalDesc"), sessionDescription);
-                        localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemoteDesc"), sessionDescription);
-                    }
-                },new MediaConstraints());
-            }
-        },sdpConstraints);
-    }
     public void onIceCandidateReceived(PeerConnection peer, IceCandidate iceCandidate) {
         //we have received ice candidate. We can set it to the other peer.
         if (peer == localPeer) {
@@ -707,6 +808,67 @@ public class ActiveRoomActivity extends AppCompatActivity {
             localPeer.addIceCandidate(iceCandidate);
         }
     }
+
+    private void createPeerConnection(){
+        PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
+        // TCP candidates are only useful when connecting to a server that supports
+        // ICE-TCP.
+        rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED;
+        rtcConfig.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
+        rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE;
+        rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+        // Use ECDSA encryption.
+        rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
+        //creating localPeer
+        localPeer = peerConnectionFactory.createPeerConnection(iceServers, sdpConstraints, new CustomPeerConnectionObserver("localPeerCreation") {
+            @Override
+            public void onIceCandidate(IceCandidate iceCandidate) {
+                super.onIceCandidate(iceCandidate);
+                onIceCandidateReceived(localPeer, iceCandidate);
+            }
+            @Override
+            public void onAddStream(MediaStream mediaStream) {
+                Toast.makeText(getBaseContext(),"Received Remote stream",Toast.LENGTH_LONG).show();
+                super.onAddStream(mediaStream);
+                gotRemoteStream(mediaStream);
+            }
+        });
+        addStreamToLocalPeer();
+
+    }
+
+    //Adding the stream to the localpeer
+    private void addStreamToLocalPeer() {
+        //creating local mediastream
+        MediaStream stream = peerConnectionFactory.createLocalMediaStream("102");
+        stream.addTrack(localAudioTrack);
+        localPeer.addStream(stream);
+    }
+
+    /*private void doCall() {
+        sdpConstraints = new MediaConstraints();
+        sdpConstraints.mandatory.add(
+                new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
+        localPeer.createOffer(new CustomSdpObserver("localCreateOffer") {
+            @Override
+            public void onCreateSuccess(SessionDescription sessionDescription) {
+                super.onCreateSuccess(sessionDescription);
+                localPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"), sessionDescription);
+                Log.d("onCreateSuccess", "SignallingClient emit ");
+                JSONObject obj = new JSONObject();
+                try {
+                    obj.put("type", sessionDescription.type.canonicalForm());
+                    obj.put("sdp", sessionDescription.description);
+                    Log.d("emitMessage", obj.toString());
+                    getRoomInfoSocket.emit(CHANNEL_MESSAGE, obj);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, sdpConstraints);
+    }*/
+
+    // Received remote peer's media stream. we will get the first video track and render it
     private void gotRemoteStream(MediaStream stream) {
         //we have remote video stream. add to the renderer.
         AudioTrack audioTrack = stream.audioTracks.getFirst();
@@ -721,16 +883,163 @@ public class ActiveRoomActivity extends AppCompatActivity {
             }
         });
     }
-    private void hangup() {
-        localPeer.close();
-        remotePeer.close();
-        localPeer = null;
-        remotePeer = null;
+
+    // Received local ice candidate. Send it to remote peer through signalling for negotiation
+    public void onIceCandidateReceived(IceCandidate iceCandidate) {
+        //we have received ice candidate. We can set it to the other peer.
+        emitIceCandidate(iceCandidate);
     }
 
-    private createPeerConnection(){
-        PeerConnection.RTCConfiguration rtcCongig =PeerConnection.RTCConfiguration(remotePeer);
-        rtcCongig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy
+    public void emitIceCandidate(IceCandidate iceCandidate) {
+        try {
+            JSONObject object = new JSONObject();
+            object.put("type", "candidate");
+            object.put("label", iceCandidate.sdpMLineIndex);
+            object.put("id", iceCandidate.sdpMid);
+            object.put("candidate", iceCandidate.sdp);
+            getRoomInfoSocket.emit(CHANNEL_MESSAGE, object);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
+    // SignallingCallback - Called when remote peer sends offer
+    public void onOfferReceived(final JSONObject data) {
+        Toast.makeText(getBaseContext(),"Received Offer",Toast.LENGTH_LONG).show();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    onTryToStart();
+                    localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
+                            new SessionDescription(SessionDescription.Type.OFFER, data.getString("sdp")));
+                    doAnswer();
+                }catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    /* This method will be called directly by the app when it is the initiator and has got the local media
+       or when the remote peer sends a message through socket that it is ready to transmit AV data */
+    public void onTryToStart() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.i(TOAST_TAG , CHANNEL_MESSAGE + " : "+ "onTryToStart");
+                createPeerConnection();
+                doCall();
+            }
+        });
+    }
+    private void doCall() {
+        //we already have video and audio tracks. Now create peerconnections
+        iceServers = new ArrayList<>();
+
+        //create sdpConstraints
+        sdpConstraints = new MediaConstraints();
+        sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair("offerToReceiveAudio", "true"));
+
+        //creating Offer
+        localPeer.createOffer(new CustomSdpObserver("localCreateOffer"){
+            @Override
+            public void onCreateSuccess(SessionDescription sessionDescription) {
+                //we have localOffer. Set it as local desc for localpeer and remote desc for remote peer.
+                //try to create answer from the remote peer.
+                super.onCreateSuccess(sessionDescription);
+                localPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"), sessionDescription);
+                remotePeer.setRemoteDescription(new CustomSdpObserver("remoteSetRemoteDesc"), sessionDescription);
+                remotePeer.createAnswer(new CustomSdpObserver("remoteCreateOffer") {
+                    @Override
+                    public void onCreateSuccess(SessionDescription sessionDescription) {
+                        //remote answer generated. Now set it as local desc for remote peer and remote desc for local peer.
+                        super.onCreateSuccess(sessionDescription);
+                        remotePeer.setLocalDescription(new CustomSdpObserver("remoteSetLocalDesc"), sessionDescription);
+                        localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemoteDesc"), sessionDescription);
+                    }
+                },new MediaConstraints());
+            }
+        },sdpConstraints);
+
+        //creating remotePeer
+        remotePeer = peerConnectionFactory.createPeerConnection(iceServers, sdpConstraints,
+                new CustomPeerConnectionObserver("remotePeerCreation") {
+
+                    @Override
+                    public void onIceCandidate(IceCandidate iceCandidate) {
+                        super.onIceCandidate(iceCandidate);
+                        onIceCandidateReceived(remotePeer, iceCandidate);
+                    }
+
+                    @Override
+                    public void onAddStream(MediaStream mediaStream) {
+                        super.onAddStream(mediaStream);
+                        gotRemoteStream(mediaStream);
+                    }
+                });
+
+        //creating local mediastream
+        MediaStream stream = peerConnectionFactory.createLocalMediaStream("102");
+        stream.addTrack(localAudioTrack);
+        //stream.addTrack(localVideoTrack);
+        localPeer.addStream(stream);
+
+    }
+    private void doAnswer() {
+        localPeer.createAnswer(new CustomSdpObserver("localCreateAns") {
+            @Override
+            public void onCreateSuccess(SessionDescription sessionDescription) {
+                super.onCreateSuccess(sessionDescription);
+                localPeer.setLocalDescription(new CustomSdpObserver("localSetLocal"), sessionDescription);
+                JSONObject obj = new JSONObject();
+                try {
+                    obj.put("type", sessionDescription.type.canonicalForm());
+                    obj.put("sdp", sessionDescription.description);
+                    Log.d(TOAST_TAG,CHANNEL_MESSAGE + "doAnswer"+ obj.toString());
+                    getRoomInfoSocket.emit(CHANNEL_MESSAGE, obj);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new MediaConstraints());
+    }
+
+    //SignallingCallback - Called when remote peer sends answer to your offer
+    public void onAnswerReceived(JSONObject data) {
+        Toast.makeText(getBaseContext(),"Received Answer",Toast.LENGTH_LONG).show();
+        try {
+            localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"), new SessionDescription(SessionDescription.Type.fromCanonicalForm(data.getString("type").toLowerCase()), data.getString("sdp")));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Remote IceCandidate received
+    public void onIceCandidateReceived(JSONObject data) {
+        try {
+            localPeer.addIceCandidate(new IceCandidate(data.getString("id"), data.getInt("label"), data.getString("candidate")));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void hangup() {
+        try {
+            if (localPeer != null) {
+                localPeer.close();
+                getRoomInfoSocket.emit(CHANNEL_BYE_EVENT, roomId);
+            }
+            localPeer = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void onRemoteHangUp(String msg) {
+        Toast.makeText(getBaseContext(), "Remote Peer hungup", Toast.LENGTH_LONG).show();
+        hangup();
+    }
+
+
 
 }
