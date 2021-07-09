@@ -230,6 +230,7 @@ public class DashboardFragment extends Fragment {
                     intent.putExtra(ARG_ACCESS_TOKEN , accessToken);
                     intent.putExtra(ARG_ROOM_ID , roomID);
                     startActivity(intent);
+                    //doCall();
                 }
             });
         }

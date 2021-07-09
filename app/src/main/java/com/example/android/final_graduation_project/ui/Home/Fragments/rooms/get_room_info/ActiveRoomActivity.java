@@ -100,10 +100,16 @@ public class ActiveRoomActivity extends AppCompatActivity {
     private List<PeerConnection.IceServer> iceServers;
     private boolean gotUserMedia;
 
+    //new webRTC
+    private String CHANNEL_ON_START_CALL = "start_call";
+    private String CHANNEL_ON_WEBRTC_OFFER = "webrtc_offer";
+    private String CHANNEL_ON_WEBRTC_ANSWER = "webrtc_answer";
+
 
     private String TOAST_TAG = "GetRoomInfo";
     private static final String ARG_ACCESS_TOKEN = "accessToken";
     private static final String ARG_ROOM_ID = "room_id";
+    private static  String USER_CREATOR_ID = "";
     String accessToken = "";
     String roomId = "";
     HashMap<String, Object> data;
@@ -111,6 +117,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
     private Socket getRoomInfoSocket;
     private Socket socketIdFromRoomSocket;
     PopupMenu popupMenu;
+   // private PeerConnectionFactory peerConnectionFactory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,7 +150,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
         //bye event
         getRoomInfoSocket.on(CHANNEL_BYE_EVENT, onRemoteHangUp);
         //messages - SDP and ICE candidates are transferred through this
-        getRoomInfoSocket.on(CHANNEL_MESSAGE, args -> {
+       /* getRoomInfoSocket.on(CHANNEL_MESSAGE, args -> {
             Log.i(TOAST_TAG,CHANNEL_ON_JOINED_ROOM+" : "+args[0].toString()+"");
             if (args[0] instanceof String) {
                 Log.d("SignallingClient", "String received :: " + args[0]);
@@ -172,7 +179,11 @@ public class ActiveRoomActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-        });
+        });*/
+
+        //webRTC
+        getRoomInfoSocket.on(CHANNEL_ON_START_CALL , onStartCall);
+        getRoomInfoSocket.on(CHANNEL_ON_WEBRTC_OFFER , onWebRtcOffer);
 
         accessToken = getIntent().getStringExtra(ARG_ACCESS_TOKEN);
         roomId = getIntent().getStringExtra(ARG_ROOM_ID);
@@ -214,6 +225,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
                                         if (roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id()
                                                 .equals(roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getCreated_by())) {
+                                            USER_CREATOR_ID = roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id()+"";
                                             Log.i(TOAST_TAG, "Created By  : " + roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getCreated_by());
                                             String userId = roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id();
                                             Log.i(TOAST_TAG, "User Created this room   : " + roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id());
@@ -222,8 +234,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
                                             activityActiveRoomBinding.EndRoom.setVisibility(View.VISIBLE);
                                             activityActiveRoomBinding.micOff.setVisibility(View.VISIBLE);
                                             activityActiveRoomBinding.acceptMemberAsk.setVisibility(View.VISIBLE);
-                                            checkPermission();
-                                            start();
+
                                             activityActiveRoomBinding.EndRoom.setOnClickListener(new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View view) {
@@ -436,16 +447,24 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 SessionManager.setAccessToken(roomInfoViewModel.refreshMutableLiveData.getValue().getToken());
             }
         });
+        start();
+        try {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("roomId",roomId);
+            getRoomInfoSocket.emit(CHANNEL_ON_START_CALL , jsonObject.toString());
+        }catch (JSONException ex){
+            ex.printStackTrace();
+        }
 
     }
-    private boolean checkPermission() {
+    /*private boolean checkPermission() {
         if (ActivityCompat.checkSelfPermission(getBaseContext(), recordPermission) == PackageManager.PERMISSION_GRANTED) {
             return true;
         } else {
             ActivityCompat.requestPermissions(this, new String[]{recordPermission}, permissionCode);
             return false;
         }
-    }
+    }*/
 
     @Override
     public void onBackPressed() {
@@ -772,29 +791,90 @@ public class ActiveRoomActivity extends AppCompatActivity {
         }
     };*/
 
-    private void start() {
-        if (checkPermission()) {
-            initializePeerConnectionFactory();
-        } else {
-            Toast.makeText(this, "Need some permissions", Toast.LENGTH_LONG).show();
+    private Emitter.Listener onStartCall = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            Log.i(TOAST_TAG,CHANNEL_ON_START_CALL + " : " + args[0] + "");
+            JSONObject jsonObject = (JSONObject) args[0];
+            if(!USER_CREATOR_ID.isEmpty()){
+                createPeerConnection();
+            }else{
+
+            }
         }
+    };
+    private Emitter.Listener onWebRtcOffer = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Log.i(TOAST_TAG,CHANNEL_ON_START_CALL + " : " + args[0] + "");
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        //onTryToStart();
+                        localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
+                                new SessionDescription(SessionDescription.Type.OFFER, jsonObject.getString("sdp")));
+                        doAnswer();
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
+    };
+    private Emitter.Listener onWebRtcAnswer = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Log.i(TOAST_TAG,CHANNEL_ON_START_CALL + " : " + args[0] + "");
+                        JSONObject jsonObject = (JSONObject)args[0];
+                        localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
+                                new SessionDescription(
+                                        SessionDescription.Type.fromCanonicalForm(jsonObject.getString("type").toLowerCase()),
+                                        jsonObject.getString("sdp")));
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+        }
+    };
+
+    private void start() {
+        initializePeerConnectionFactory();
     }
 
     private void initializePeerConnectionFactory() {
         //Initialize PeerConnectionFactory globals.
         //Params are context, initAudio,initVideo and videoCodecHwAcceleration
-        PeerConnectionFactory.initializeAndroidGlobals(this, true, false, true);
+        PeerConnectionFactory.initializeAndroidGlobals(this, true, false,false);
+       // PeerConnectionFactory.nativeInitializeAndroidGlobals(getBaseContext(), true);
 
         //Create a new PeerConnectionFactory instance.
         PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
-        PeerConnectionFactory peerConnectionFactory = new PeerConnectionFactory(options);
+        PeerConnectionFactory peerConnectionFactorylocal = new PeerConnectionFactory(options);
+         peerConnectionFactory = new PeerConnectionFactory(null);
+       /* PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(context)
+                .setEnableInternalTracer(true)
+                .createInitializationOptions());*/
+
 
         //Create MediaConstraints - Will be useful for specifying video and audio constraints. More on this later!
         audioConstraints = new MediaConstraints();
 
         //create an AudioSource instance
-        audioSource = peerConnectionFactory.createAudioSource(audioConstraints);
-        localAudioTrack = peerConnectionFactory.createAudioTrack("101", audioSource);
+        audioSource = peerConnectionFactorylocal.createAudioSource(audioConstraints);
+        localAudioTrack = peerConnectionFactorylocal.createAudioTrack("101", audioSource);
+
+        //
+
+
 
         gotUserMedia = true;
 
@@ -802,6 +882,8 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
     public void onIceCandidateReceived(PeerConnection peer, IceCandidate iceCandidate) {
         //we have received ice candidate. We can set it to the other peer.
+
+       // Log.i(TOAST_TAG,iceCandidate.toString());
         if (peer == localPeer) {
             remotePeer.addIceCandidate(iceCandidate);
         } else {
@@ -810,17 +892,17 @@ public class ActiveRoomActivity extends AppCompatActivity {
     }
 
     private void createPeerConnection(){
-        PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
+        PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(new ArrayList<>());
         // TCP candidates are only useful when connecting to a server that supports
         // ICE-TCP.
-        rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED;
+       /* rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED;
         rtcConfig.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
         rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE;
         rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
         // Use ECDSA encryption.
-        rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
+        rtcConfig.keyType = PeerConnection.KeyType.ECDSA;*/
         //creating localPeer
-        localPeer = peerConnectionFactory.createPeerConnection(iceServers, sdpConstraints, new CustomPeerConnectionObserver("localPeerCreation") {
+        localPeer = peerConnectionFactory.createPeerConnection(new ArrayList<>(), sdpConstraints, new CustomPeerConnectionObserver("localPeerCreation") {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
                 super.onIceCandidate(iceCandidate);
@@ -835,6 +917,10 @@ public class ActiveRoomActivity extends AppCompatActivity {
         });
         addStreamToLocalPeer();
 
+        MediaStream stream = peerConnectionFactory.createLocalMediaStream("102");
+        stream.addTrack(localAudioTrack);
+        localPeer.addStream(stream);
+
     }
 
     //Adding the stream to the localpeer
@@ -845,7 +931,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
         localPeer.addStream(stream);
     }
 
-    /*private void doCall() {
+    private void doCall() {
         sdpConstraints = new MediaConstraints();
         sdpConstraints.mandatory.add(
                 new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
@@ -859,14 +945,15 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 try {
                     obj.put("type", sessionDescription.type.canonicalForm());
                     obj.put("sdp", sessionDescription.description);
+                    obj.put("roomId", roomId);
+                    getRoomInfoSocket.emit(CHANNEL_ON_WEBRTC_OFFER, obj.toString());
                     Log.d("emitMessage", obj.toString());
-                    getRoomInfoSocket.emit(CHANNEL_MESSAGE, obj);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
         }, sdpConstraints);
-    }*/
+    }
 
     // Received remote peer's media stream. we will get the first video track and render it
     private void gotRemoteStream(MediaStream stream) {
@@ -904,7 +991,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
     }
 
     // SignallingCallback - Called when remote peer sends offer
-    public void onOfferReceived(final JSONObject data) {
+   /* public void onOfferReceived(final JSONObject data) {
         Toast.makeText(getBaseContext(),"Received Offer",Toast.LENGTH_LONG).show();
         runOnUiThread(new Runnable() {
             @Override
@@ -919,7 +1006,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 }
             }
         });
-    }
+    }*/
 
     /* This method will be called directly by the app when it is the initiator and has got the local media
        or when the remote peer sends a message through socket that it is ready to transmit AV data */
@@ -933,7 +1020,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
             }
         });
     }
-    private void doCall() {
+    /*private void doCall() {
         //we already have video and audio tracks. Now create peerconnections
         iceServers = new ArrayList<>();
 
@@ -949,6 +1036,9 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 //try to create answer from the remote peer.
                 super.onCreateSuccess(sessionDescription);
                 localPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"), sessionDescription);
+
+                // emit webrtc_offer
+
                 remotePeer.setRemoteDescription(new CustomSdpObserver("remoteSetRemoteDesc"), sessionDescription);
                 remotePeer.createAnswer(new CustomSdpObserver("remoteCreateOffer") {
                     @Override
@@ -985,7 +1075,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
         //stream.addTrack(localVideoTrack);
         localPeer.addStream(stream);
 
-    }
+    }*/
     private void doAnswer() {
         localPeer.createAnswer(new CustomSdpObserver("localCreateAns") {
             @Override
@@ -996,8 +1086,9 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 try {
                     obj.put("type", sessionDescription.type.canonicalForm());
                     obj.put("sdp", sessionDescription.description);
-                    Log.d(TOAST_TAG,CHANNEL_MESSAGE + "doAnswer"+ obj.toString());
-                    getRoomInfoSocket.emit(CHANNEL_MESSAGE, obj);
+                    obj.put("roomId", roomId);
+                    Log.d(TOAST_TAG,CHANNEL_ON_WEBRTC_ANSWER + "doAnswer"+ obj.toString());
+                    getRoomInfoSocket.emit(CHANNEL_ON_WEBRTC_ANSWER, obj.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -1009,7 +1100,8 @@ public class ActiveRoomActivity extends AppCompatActivity {
     public void onAnswerReceived(JSONObject data) {
         Toast.makeText(getBaseContext(),"Received Answer",Toast.LENGTH_LONG).show();
         try {
-            localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"), new SessionDescription(SessionDescription.Type.fromCanonicalForm(data.getString("type").toLowerCase()), data.getString("sdp")));
+            localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
+                    new SessionDescription(SessionDescription.Type.fromCanonicalForm(data.getString("type").toLowerCase()), data.getString("sdp")));
         } catch (JSONException e) {
             e.printStackTrace();
         }
