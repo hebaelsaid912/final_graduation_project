@@ -9,8 +9,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -88,7 +90,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
     //webRtc
     private MediaConstraints sdpConstraints;
-    private MediaConstraints audioConstraints ;
+    private MediaConstraints audioConstraints;
     private PeerConnection localPeer;
     private PeerConnectionFactory peerConnectionFactory;
     private AudioTrack localAudioTrack;
@@ -97,12 +99,13 @@ public class ActiveRoomActivity extends AppCompatActivity {
     private int permissionCode = 21;
     private List<PeerConnection.IceServer> iceServers;
     List<PeerConnection.IceServer> peerIceServers = new ArrayList<>();
+     AudioManager manager;
 
     //variables
     private String TOAST_TAG = "GetRoomInfo";
     private static final String ARG_ACCESS_TOKEN = "accessToken";
     private static final String ARG_ROOM_ID = "room_id";
-    private static  String USER_CREATOR_ID = "";
+    private static String USER_CREATOR_ID = "";
     String accessToken = "";
     String roomId = "";
     HashMap<String, Object> data;
@@ -133,8 +136,9 @@ public class ActiveRoomActivity extends AppCompatActivity {
         getRoomInfoSocket.on(CHANNEL_LISTEN_IF_MEMBER_CAN_SPEAK, onIfCanSpeak);
         getRoomInfoSocket.on(CHANNEL_LISTEN_IF_MODERATOR_CANCEL_MEMBER_REQUEST, onIfModeratorCancelMemberRequst);
         //webRTC
-        getRoomInfoSocket.on(CHANNEL_ON_START_CALL , onStartCall);
-        getRoomInfoSocket.on(CHANNEL_ON_WEBRTC_OFFER , onWebRtcOffer);
+        getRoomInfoSocket.on(CHANNEL_ON_START_CALL, onStartCall);
+        getRoomInfoSocket.on(CHANNEL_ON_WEBRTC_OFFER, onWebRtcOffer);
+        getRoomInfoSocket.on(CHANNEL_ON_WEBRTC_ANSWER, onWebRtcAnswer);
         getRoomInfoSocket.on(CHANNEL_ON_WEBRTC_ICE_CANDIDATE, onWebRtcIceCandidate);
 
         accessToken = getIntent().getStringExtra(ARG_ACCESS_TOKEN);
@@ -155,6 +159,8 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
         roomInfoViewModel.setRoomInfoData(accessToken, data);
         roomInfoViewModel.getUserInfo(accessToken);
+        manager = (AudioManager)getBaseContext().getSystemService(Context.AUDIO_SERVICE);
+
 
         PopupMenu popupMenu = new PopupMenu(getBaseContext(), activityActiveRoomBinding.acceptMemberAsk);
         popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
@@ -177,7 +183,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
                                         if (roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id()
                                                 .equals(roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getCreated_by())) {
-                                            USER_CREATOR_ID = roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id()+"";
+                                            USER_CREATOR_ID = roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id() + "";
                                             Log.i(TOAST_TAG, "Created By  : " + roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getCreated_by());
                                             String userId = roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id();
                                             Log.i(TOAST_TAG, "User Created this room   : " + roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id());
@@ -292,7 +298,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
                                                 JSONObject jsonObject = new JSONObject();
                                                 try {
                                                     jsonObject.put("roomId", roomId);
-                                                    jsonObject.put("username", userInformation.getUser().getUsername()+"");
+                                                    jsonObject.put("username", userInformation.getUser().getUsername() + "");
                                                     getRoomInfoSocket.emit(CHANNEL_REQUSTE_TO_WANT_TO_SPEAK, jsonObject.toString());
                                                 } catch (JSONException e) {
                                                     e.printStackTrace();
@@ -400,9 +406,9 @@ public class ActiveRoomActivity extends AppCompatActivity {
         start();
         try {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("roomId",roomId);
-            getRoomInfoSocket.emit(CHANNEL_ON_START_CALL , jsonObject.toString());
-        }catch (JSONException ex){
+            jsonObject.put("roomId", roomId);
+            getRoomInfoSocket.emit(CHANNEL_ON_START_CALL, jsonObject.toString());
+        } catch (JSONException ex) {
             ex.printStackTrace();
         }
 
@@ -457,25 +463,36 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
     }
 
-    private void createPeerConnection(){
+    private void createPeerConnection() {
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(peerIceServers);
-        Log.i(TOAST_TAG,CHANNEL_ON_START_CALL + " : " +"on createPeerConnection ");
+        Log.i(TOAST_TAG, CHANNEL_ON_START_CALL + " : " + "on createPeerConnection ");
         //creating localPeer
         localPeer = peerConnectionFactory.createPeerConnection(rtcConfig, sdpConstraints, new CustomPeerConnectionObserver("localPeerCreation") {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
                 super.onIceCandidate(iceCandidate);
-                Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onIceCandidate: Sender :  " + iceCandidate);
+                Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onIceCandidate: Sender :  " + iceCandidate);
                 emitIceCandidate(iceCandidate);
             }
+
             @Override
             public void onAddStream(MediaStream mediaStream) {
                 super.onAddStream(mediaStream);
-                Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onAddStream: " + mediaStream);
-                gotRemoteStream(mediaStream);
+                Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onAddStream: " + mediaStream);
+                manager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL,
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+                manager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                manager.setSpeakerphoneOn(true);
+                manager.setMicrophoneMute(false);
+                //manager.strea
+                AudioTrack audioTrack = mediaStream.audioTracks.get(0);
+               // audioTrack.play();
+                //AudioStrea
+
             }
         });
-        Log.i(TOAST_TAG,"on createPeerConnection " + localPeer);
+        Log.i(TOAST_TAG, "on createPeerConnection " + localPeer);
         addStreamToLocalPeer();
     }
 
@@ -491,11 +508,17 @@ public class ActiveRoomActivity extends AppCompatActivity {
     private void gotRemoteStream(MediaStream stream) {
         //we have remote video stream. add to the renderer.
         AudioTrack audioTrack = stream.audioTracks.get(0);
+        Log.i(TOAST_TAG,"onAddStream : ongotRemoteStream");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    Log.i(TOAST_TAG,"onAddStream : ongotRemoteStream");
                     audioTrack.setEnabled(true);
+                   // AudioManager manager = new AudioManager();
+                    //manager.sta
+                    //audioTrack.
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -540,6 +563,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
             }
         }, sdpConstraints);
     }
+
     private void doAnswer() {
         localPeer.createAnswer(new CustomSdpObserver("localCreateAns") {
             @Override
@@ -551,7 +575,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
                     obj.put("type", sessionDescription.type.canonicalForm());
                     obj.put("sdp", sessionDescription.description);
                     obj.put("roomId", roomId);
-                    Log.d(TOAST_TAG,CHANNEL_ON_WEBRTC_ANSWER + "doAnswer"+ obj.toString());
+                    Log.d(TOAST_TAG, CHANNEL_ON_WEBRTC_ANSWER + "doAnswer" + obj.toString());
                     getRoomInfoSocket.emit(CHANNEL_ON_WEBRTC_ANSWER, obj.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -564,13 +588,14 @@ public class ActiveRoomActivity extends AppCompatActivity {
     // Remote IceCandidate received
     public void onIceCandidateReceived(JSONObject data) {
         try {
-            Log.i(TOAST_TAG , CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onaddIceCandidate : " );
+            Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onaddIceCandidate : ");
             localPeer.addIceCandidate(new IceCandidate(data.getString("id"), data.getInt("label"), data.getString("candidate")));
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
-    void getIceServer(){
+
+    void getIceServer() {
         PeerConnection.IceServer peerIceServer = PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer();
         peerIceServers.add(peerIceServer);
     }
@@ -587,10 +612,12 @@ public class ActiveRoomActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     public void onRemoteHangUp(String msg) {
         Toast.makeText(getBaseContext(), "Remote Peer hungup", Toast.LENGTH_LONG).show();
         hangup();
     }
+
     //Emitter.Listener
     private Emitter.Listener onRefresh = new Emitter.Listener() {
         @Override
@@ -680,8 +707,8 @@ public class ActiveRoomActivity extends AppCompatActivity {
                         JSONObject json = (JSONObject) args[0];
                         Log.i(TOAST_TAG, CHANNEL_LISTEN_IF_MEMBER_WANT_TO_SPEAK + " : " + json.getString("username") + "");
                         Log.i(TOAST_TAG, CHANNEL_LISTEN_IF_MEMBER_WANT_TO_SPEAK + " : " + json.getString("socketId").toString() + "");
-                        memberswantTospeakList.get(0).put("userName", json.getString("username")+"");
-                        memberswantTospeakList.get(0).put("memberSocketId", json.getString("socketId")+"");
+                        memberswantTospeakList.get(0).put("userName", json.getString("username") + "");
+                        memberswantTospeakList.get(0).put("memberSocketId", json.getString("socketId") + "");
                         popupMenu = new PopupMenu(getBaseContext(), activityActiveRoomBinding.acceptMemberAsk);
                         //popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
                         popupMenu.getMenu().add(json.getString("username"));
@@ -745,11 +772,11 @@ public class ActiveRoomActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Log.i(TOAST_TAG,CHANNEL_LISTEN_IF_MEMBER_CAN_SPEAK + " : "+args[0].toString()+"");
+                    Log.i(TOAST_TAG, CHANNEL_LISTEN_IF_MEMBER_CAN_SPEAK + " : " + args[0].toString() + "");
                     try {
                         JSONObject jsonObject = (JSONObject) args[0];
-                        Toast.makeText(getBaseContext(),jsonObject.getString("message")+"",Toast.LENGTH_LONG) .show();
-                    }catch (JSONException e){
+                        Toast.makeText(getBaseContext(), jsonObject.getString("message") + "", Toast.LENGTH_LONG).show();
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
 
@@ -760,11 +787,11 @@ public class ActiveRoomActivity extends AppCompatActivity {
     private Emitter.Listener onIfModeratorCancelMemberRequst = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
-            Log.i(TOAST_TAG,CHANNEL_LISTEN_IF_MODERATOR_CANCEL_MEMBER_REQUEST + " : "+args[0].toString()+"");
+            Log.i(TOAST_TAG, CHANNEL_LISTEN_IF_MODERATOR_CANCEL_MEMBER_REQUEST + " : " + args[0].toString() + "");
             try {
                 JSONObject jsonObject = (JSONObject) args[0];
-                Toast.makeText(getBaseContext(),jsonObject.getString("message")+"",Toast.LENGTH_LONG) .show();
-            }catch (JSONException e){
+                Toast.makeText(getBaseContext(), jsonObject.getString("message") + "", Toast.LENGTH_LONG).show();
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
@@ -797,12 +824,12 @@ public class ActiveRoomActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Log.i(TOAST_TAG,CHANNEL_ON_START_CALL + " : " + args[0] + "");
+                    Log.i(TOAST_TAG, CHANNEL_ON_START_CALL + " : " + args[0] + "");
                     JSONObject jsonObject = (JSONObject) args[0];
-                    createPeerConnection();
-                    if(!USER_CREATOR_ID.isEmpty()){
+                    // createPeerConnection();
+                    if (!USER_CREATOR_ID.isEmpty()) {
                         doCall();
-                    }else{
+                    } else {
 
                     }
                 }
@@ -817,21 +844,22 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     try {
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_OFFER + " : " + args[0] + "");
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_OFFER + " : " + args[0] + "");
                         JSONObject jsonObject = (JSONObject) args[0];
-                        //onTryToStart();
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_OFFER + " type 1 : " + jsonObject.getString("type") + "");
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_OFFER + " type 2 : " + SessionDescription.Type.fromCanonicalForm(jsonObject.getString("type").toLowerCase()).toString() + "");
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_OFFER + " sdp : " + jsonObject.getString("sdp") + "");
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_OFFER + " localPeer : " + localPeer + "");
 
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_OFFER + " type 1 : " +jsonObject.getString("type") + "");
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_OFFER + " type 2 : " +SessionDescription.Type.fromCanonicalForm(jsonObject.getString("type").toLowerCase()).toString() + "");
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_OFFER + " sdp : " +jsonObject.getString("sdp") + "");
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_OFFER + " localPeer : " +localPeer + "");
-                        doAnswer();
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_OFFER + " isNotCreator : ");
+
                         localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
                                 new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm(jsonObject.getString("type").toLowerCase()),
                                         jsonObject.getString("sdp")));
+                        doAnswer();
 
-                    }catch (JSONException e){
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
@@ -846,13 +874,17 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     try {
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_ANSWER + " : " + args[0] + "");
-                        JSONObject jsonObject = (JSONObject)args[0];
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ANSWER + " : " + args[0] + "");
+                        JSONObject jsonObject = (JSONObject) args[0];
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ANSWER + " type : " + jsonObject.getString("type") + "");
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ANSWER + " sdp: " + jsonObject.getString("sdp") + "");
+
                         localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
                                 new SessionDescription(
                                         SessionDescription.Type.fromCanonicalForm(jsonObject.getString("type").toLowerCase()),
                                         jsonObject.getString("sdp")));
-                    }catch (Exception e){
+
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -867,11 +899,11 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     try {
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " : " + args[0] + "");
-                        Log.i(TOAST_TAG,CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onIceCandidate: " + args[0] + "");
-                        JSONObject jsonObject = (JSONObject)args[0];
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " : " + args[0] + "");
+                        Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onIceCandidate try: " + args[0] + "");
+                        JSONObject jsonObject = (JSONObject) args[0];
                         onIceCandidateReceived(jsonObject);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
