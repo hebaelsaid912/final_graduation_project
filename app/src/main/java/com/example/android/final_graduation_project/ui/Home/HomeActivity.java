@@ -7,6 +7,7 @@ import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -16,17 +17,18 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.widget.Toast;
 
 import com.example.android.final_graduation_project.SessionManager;
+import com.example.android.final_graduation_project.pojo.LogOut.LogoutObject;
+import com.example.android.final_graduation_project.pojo.UserInfo.UserInformation;
 import com.example.android.final_graduation_project.ui.home.Drawer.SpaceItem;
 import com.example.android.final_graduation_project.ui.home.fragments.AboutUsFragment;
-import com.example.android.final_graduation_project.ui.home.fragments.ActiveRoomsFragment;
 import com.example.android.final_graduation_project.ui.home.fragments.rooms.getRooms.DashboardFragment;
 import com.example.android.final_graduation_project.ui.home.Drawer.DrawerAdapter;
 import com.example.android.final_graduation_project.ui.home.Drawer.DrawerItem;
 import com.example.android.final_graduation_project.ui.home.Drawer.SimpleItem;
-import com.example.android.final_graduation_project.ui.home.fragments.FollowerRoomsFragment;
-import com.example.android.final_graduation_project.ui.home.fragments.ProfileFragment;
+import com.example.android.final_graduation_project.ui.home.fragments.profile.ProfileFragment;
 import com.example.android.final_graduation_project.R;
 import com.example.android.final_graduation_project.ui.home.fragments.SettingFragment;
 import com.example.android.final_graduation_project.StatusBar;
@@ -42,23 +44,27 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
     private static final int POS_CLOSE = 0 ;
     private static final int POS_DASHBOARD = 2 ;
     private static final int POS_MY_PROFILE = 3 ;
-    private static final int POS_ACTIVE_ROOMS = 4 ;
-    private static final int POS_FOLLOWER_ROOMS = 5 ;
-    private static final int POS_SETTING = 6 ;
-    private static final int POS_ABOUT_US = 7 ;
-    private static final int POS_LOGOUT = 9 ;
+    private static final int POS_SETTING = 4 ;
+    private static final int POS_ABOUT_US = 5 ;
+    private static final int POS_LOGOUT = 7 ;
 
     private  String[] screenTitles;
     private Drawable[] screenIcons;
 
     private SlidingRootNav slidingRootNav;
+
+    private HomeActivityViewModel homeActivityViewModel ;
+    private String userId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ActivityHomeBinding binding = DataBindingUtil.setContentView(this,R.layout.activity_home);
+        binding.setLifecycleOwner(this);
         new StatusBar(this , R.color.white);
         setSupportActionBar(binding.toolbar2);
-        //getActionBar().setDisplayShowTitleEnabled(false);
+        homeActivityViewModel = new HomeActivityViewModel();
+        Log.i("Home Activity : " , SessionManager.getAccessToken());
+        homeActivityViewModel.getUserInfo("Bearer " +SessionManager.getAccessToken());
         slidingRootNav = new SlidingRootNavBuilder(this)
                 .withToolbarMenuToggle(binding.toolbar2)
                 .withMenuOpened(false)
@@ -75,8 +81,6 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
                 new SpaceItem(100),
                 createItemFor(POS_DASHBOARD).setChecked(true),
                 createItemFor(POS_MY_PROFILE),
-                createItemFor(POS_ACTIVE_ROOMS),
-                createItemFor(POS_FOLLOWER_ROOMS),
                 createItemFor(POS_SETTING),
                 createItemFor(POS_ABOUT_US),
                 new SpaceItem(58),
@@ -89,6 +93,23 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
         recyclerView.setAdapter(adapter);
 
         adapter.setSelected(POS_DASHBOARD);
+
+        homeActivityViewModel.userInformationMutableLiveData.observe(this, new Observer<UserInformation>() {
+            @Override
+            public void onChanged(UserInformation userInformation) {
+                if(homeActivityViewModel.userInformationMutableLiveData.getValue().getCode() == 200){
+                    userId = homeActivityViewModel.userInformationMutableLiveData.getValue().getUser().get_id()+"";
+                    Log.i("HomeActivity mmmm: " , homeActivityViewModel.userInformationMutableLiveData.getValue().getCode()+"");
+                    Log.i("HomeActivity bbb: " , homeActivityViewModel.userInformationMutableLiveData.getValue().getMessage()+"");
+                    Log.i("HomeActivity cccc: " , homeActivityViewModel.userInformationMutableLiveData.getValue().getUser().get_id()+"");
+                }else{
+                    Log.i("HomeActivity xxxx: " , homeActivityViewModel.userInformationMutableLiveData.getValue().getCode()+"");
+                    Log.i("HomeActivity ddddd: " , homeActivityViewModel.userInformationMutableLiveData.getValue().getMessage()+"");
+                    //Log.i("Home Activity : " , homeActivityViewModel.userInformationMutableLiveData.getValue().getUser().get_id()+"");
+
+                }
+            }
+        });
     }
     private DrawerItem createItemFor(int position){
         return  new SimpleItem(screenIcons[position],screenTitles[position])
@@ -138,16 +159,8 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
                 transaction.replace(R.id.container , tab1);
                 break;
             case POS_MY_PROFILE:
-                ProfileFragment tab2 = new ProfileFragment();
+                ProfileFragment tab2 = ProfileFragment.newInstance(SessionManager.getAccessToken() ,userId);
                 transaction.replace(R.id.container , tab2);
-                break;
-            case POS_ACTIVE_ROOMS:
-                ActiveRoomsFragment tab3 = new ActiveRoomsFragment();
-                transaction.replace(R.id.container , tab3);
-                break;
-            case POS_FOLLOWER_ROOMS:
-                FollowerRoomsFragment tab4 = new FollowerRoomsFragment();
-                transaction.replace(R.id.container , tab4);
                 break;
             case POS_ABOUT_US:
                 AboutUsFragment tab5 = new AboutUsFragment();
@@ -159,19 +172,23 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
                 break;
         }
         if(position == POS_LOGOUT){
-            SessionManager.logoutUserSession();
-            Intent intent = new Intent(this , RegisterActivity.class);
-            startActivity(intent);
-            finish();
+            homeActivityViewModel.logoutUser("Bearer "+SessionManager.getAccessToken());
+            homeActivityViewModel.logoutObjectMutableLiveData.observe(this, new Observer<LogoutObject>() {
+                @Override
+                public void onChanged(LogoutObject logoutObject) {
+                    if (logoutObject.getMessage().equals("loged out successfully")) {
+                        Toast.makeText(getBaseContext(),logoutObject.getMessage()+"",Toast.LENGTH_LONG).show();
+                        SessionManager.logoutUserSession();
+                        Intent intent = new Intent(getBaseContext(), RegisterActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+            });
         }
         slidingRootNav.closeMenu();
         transaction.commit();
     }
-   /* private void showFragment(Fragment fragment) {
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, fragment)
-                .commit();
-    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -182,5 +199,6 @@ public class HomeActivity extends AppCompatActivity implements DrawerAdapter.onI
         }
         return true;
     }
+
 
 }

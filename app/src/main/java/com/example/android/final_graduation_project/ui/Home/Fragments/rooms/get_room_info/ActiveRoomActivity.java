@@ -11,8 +11,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -29,10 +31,16 @@ import com.example.android.final_graduation_project.SessionManager;
 import com.example.android.final_graduation_project.StatusBar;
 import com.example.android.final_graduation_project.databinding.ActivityActiveRoomBinding;
 import com.example.android.final_graduation_project.pojo.Rooms.endRoom.EndRoom;
+import com.example.android.final_graduation_project.pojo.Rooms.getRoomInfo.AudienceList;
 import com.example.android.final_graduation_project.pojo.Rooms.getRoomInfo.RoomInfo;
+import com.example.android.final_graduation_project.pojo.Rooms.getRoomInfo.SpeakersList;
 import com.example.android.final_graduation_project.pojo.Rooms.leaveRoom.LeaveRoom;
 import com.example.android.final_graduation_project.pojo.SocketIOResponses.LeaveRoomResponse;
 import com.example.android.final_graduation_project.pojo.UserInfo.UserInformation;
+import com.example.android.final_graduation_project.ui.home.HomeActivity;
+import com.example.android.final_graduation_project.ui.home.fragments.profile.ProfileFragment;
+import com.example.android.final_graduation_project.ui.home.fragments.rooms.getRooms.DashboardFragment;
+import com.example.android.final_graduation_project.ui.home.fragments.rooms.get_room_info.room_member_profile.RoomMemberProfileFragment;
 import com.google.gson.Gson;
 
 import org.json.JSONException;
@@ -100,6 +108,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
     private List<PeerConnection.IceServer> iceServers;
     List<PeerConnection.IceServer> peerIceServers = new ArrayList<>();
      AudioManager manager;
+    // MediaPlayer mediaPlayer;
 
     //variables
     private String TOAST_TAG = "GetRoomInfo";
@@ -180,7 +189,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
                                     if (roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id()
                                             .equals(roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id())) {
-
+                                        //if member is creator
                                         if (roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id()
                                                 .equals(roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getCreated_by())) {
                                             USER_CREATOR_ID = roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers().get(i).getUser_id() + "";
@@ -196,20 +205,12 @@ public class ActiveRoomActivity extends AppCompatActivity {
                                             activityActiveRoomBinding.EndRoom.setOnClickListener(new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View view) {
-
-                                                    JSONObject jsonObject = new JSONObject();
-                                                    try {
-                                                        jsonObject.put("roomId", roomId);
-                                                        getRoomInfoSocket.emit(CHANNEL_END_ROOM, jsonObject.toString());
-                                                    } catch (JSONException e) {
-                                                        e.printStackTrace();
-                                                    }
+                                                    roomInfoViewModel.setEndRoom(accessToken , data);
                                                 }
                                             });
                                             activityActiveRoomBinding.acceptMemberAsk.setOnClickListener(new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
-                                                    //Toast.makeText(getBaseContext() , "no click, Long press!",Toast.LENGTH_LONG).show();
 
                                                     popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                                                         @Override
@@ -310,17 +311,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
                                         activityActiveRoomBinding.LeaveRoom.setOnClickListener(new View.OnClickListener() {
                                             @Override
                                             public void onClick(View view) {
-                                                JSONObject jsonObject = new JSONObject();
-                                                try {
-                                                    jsonObject.put("roomId", roomId);
-                                                    Log.i(TOAST_TAG, roomId + " to leave");
-                                                    getRoomInfoSocket.emit(CHANNEL_REQUSTE_TO_LEAVE_ROOM, jsonObject.toString());
-                                                    roomInfoViewModel.setLeaveRoom(accessToken, data);
-                                                    finish();
-                                                } catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                }
-
+                                                roomInfoViewModel.setLeaveRoom(accessToken, data);
                                             }
                                         });
                                     }
@@ -333,8 +324,20 @@ public class ActiveRoomActivity extends AppCompatActivity {
                         //Speakers
                         RoomSpeakersAdabter roomSpeakersAdabter = new RoomSpeakersAdabter(
                                 roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getSpeakers(),
-                                getBaseContext()
-                        );
+                                getBaseContext(),
+                                new OnItemClickListenerSpeakers() {
+                            @Override
+                            public void onItemClickSpeakers(SpeakersList getSpeakers) {
+                                Log.i(TOAST_TAG,"onItemClickAudience room member" + getSpeakers.getUser_id());
+                                Log.i(TOAST_TAG,"onItemClickAudience user " +
+                                        roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id());
+                                Log.i(TOAST_TAG,"onItemClickSpeakers "+ accessToken);
+                                RoomMemberProfileFragment roomMemberProfileFragment =
+                                        RoomMemberProfileFragment.newInstance(accessToken,getSpeakers.getUser_id().toString(),
+                                                roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id());
+                                roomMemberProfileFragment.show(getSupportFragmentManager(), null);
+                            }
+                        });
                         activityActiveRoomBinding.roomSpeakersRv.setVisibility(View.VISIBLE);
                         activityActiveRoomBinding.roomSpeakersRv.setAdapter(roomSpeakersAdabter);
                         LinearLayoutManager layoutManager
@@ -343,8 +346,18 @@ public class ActiveRoomActivity extends AppCompatActivity {
                         //Audience
                         RoomAudienceAdabter roomAudienceAdabter = new RoomAudienceAdabter(
                                 roomInfoViewModel.roomInfoListMutableLiveData.getValue().getRoom_info().getAudience(),
-                                getBaseContext()
-                        );
+                                getBaseContext(), new OnItemClickListenerAudience() {
+                            @Override
+                            public void onItemClickAudience(AudienceList getAudience) {
+                                Log.i(TOAST_TAG,"onItemClickAudience room member" + getAudience.getUser_id());
+                                Log.i(TOAST_TAG,"onItemClickAudience user " +
+                                        roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id());
+                                Log.i(TOAST_TAG,"onItemClickAudience " + accessToken);
+                                RoomMemberProfileFragment roomMemberProfileFragment =
+                                        RoomMemberProfileFragment.newInstance(accessToken,getAudience.getUser_id().toString(),roomInfoViewModel.userInformationMutableLiveData.getValue().getUser().get_id());
+                                roomMemberProfileFragment.show(getSupportFragmentManager(), null);
+                            }
+                        });
                         LinearLayoutManager layoutManager22 = new LinearLayoutManager(getBaseContext(), LinearLayoutManager.HORIZONTAL, false);
                         activityActiveRoomBinding.roomMemberRv.setVisibility(View.VISIBLE);
                         activityActiveRoomBinding.roomMemberRv.setAdapter(roomAudienceAdabter);
@@ -365,6 +378,20 @@ public class ActiveRoomActivity extends AppCompatActivity {
                     Log.i(TOAST_TAG, roomInfoViewModel.leaveRoomMutableLiveData.getValue().getMessage() + "");
                     Log.i(TOAST_TAG, roomInfoViewModel.leaveRoomMutableLiveData.getValue().isLeft() + "");
                     Toast.makeText(getBaseContext(), roomInfoViewModel.leaveRoomMutableLiveData.getValue().getMessage() + "", Toast.LENGTH_LONG).show();
+                    JSONObject jsonObject = new JSONObject();
+                    try {
+                        jsonObject.put("roomId", roomId);
+                        Log.i(TOAST_TAG, roomId + " to leave");
+                        getRoomInfoSocket.emit(CHANNEL_REQUSTE_TO_LEAVE_ROOM, jsonObject.toString());
+                        hangup();
+                        Intent intent = new Intent(getBaseContext() , HomeActivity.class);
+                        intent.putExtra("accessToken" , accessToken);
+                        startActivity(intent);
+                        finish();
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     roomInfoViewModel.refredh_token(accessToken);
                     Toast.makeText(getBaseContext(), "something went wrong. please retry ", Toast.LENGTH_LONG).show();
@@ -377,6 +404,13 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 if (roomInfoViewModel.endRoomMutableLiveData.getValue().getCode() != 403) {
                     Log.i(TOAST_TAG, roomInfoViewModel.endRoomMutableLiveData.getValue().getMessage() + "");
                     Toast.makeText(getBaseContext(), roomInfoViewModel.endRoomMutableLiveData.getValue().getMessage() + "", Toast.LENGTH_LONG).show();
+                    JSONObject jsonObject = new JSONObject();
+                    try {
+                        jsonObject.put("roomId", roomId);
+                        getRoomInfoSocket.emit(CHANNEL_END_ROOM, jsonObject.toString());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     roomInfoViewModel.refredh_token(accessToken);
                     Toast.makeText(getBaseContext(), "something went wrong. please retry ", Toast.LENGTH_LONG).show();
@@ -416,26 +450,11 @@ public class ActiveRoomActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
+       // super.onBackPressed();
         if (activityActiveRoomBinding.EndRoom.getVisibility() == View.VISIBLE) {
-            JSONObject jsonObject = new JSONObject();
-            try {
-                jsonObject.put("roomId", roomId);
-                getRoomInfoSocket.emit(CHANNEL_END_ROOM, jsonObject.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            roomInfoViewModel.setEndRoom(accessToken , data);
         } else if (activityActiveRoomBinding.LeaveRoom.getVisibility() == View.VISIBLE) {
-            JSONObject jsonObject = new JSONObject();
-            try {
-                jsonObject.put("roomId", roomId);
-                Log.i(TOAST_TAG, roomId + " to leave");
-                getRoomInfoSocket.emit(CHANNEL_REQUSTE_TO_LEAVE_ROOM, jsonObject.toString());
-                roomInfoViewModel.setLeaveRoom(accessToken, data);
-                finish();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            roomInfoViewModel.setLeaveRoom(accessToken,data);
         }
     }
 
@@ -467,7 +486,8 @@ public class ActiveRoomActivity extends AppCompatActivity {
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(peerIceServers);
         Log.i(TOAST_TAG, CHANNEL_ON_START_CALL + " : " + "on createPeerConnection ");
         //creating localPeer
-        localPeer = peerConnectionFactory.createPeerConnection(rtcConfig, sdpConstraints, new CustomPeerConnectionObserver("localPeerCreation") {
+        localPeer = peerConnectionFactory.createPeerConnection(rtcConfig, sdpConstraints,
+                new CustomPeerConnectionObserver("localPeerCreation") {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
                 super.onIceCandidate(iceCandidate);
@@ -481,14 +501,11 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 Log.i(TOAST_TAG, CHANNEL_ON_WEBRTC_ICE_CANDIDATE + " onAddStream: " + mediaStream);
                 manager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL,
                         AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
-
-                manager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                manager.setMode(AudioManager.MODE_NORMAL);
                 manager.setSpeakerphoneOn(true);
                 manager.setMicrophoneMute(false);
-                //manager.strea
+                manager.setStreamVolume(AudioManager.STREAM_MUSIC,10 , 1);
                 AudioTrack audioTrack = mediaStream.audioTracks.get(0);
-               // audioTrack.play();
-                //AudioStrea
 
             }
         });
@@ -499,31 +516,10 @@ public class ActiveRoomActivity extends AppCompatActivity {
     //Adding the stream to the localpeer
     private void addStreamToLocalPeer() {
         //creating local mediastream
+        Log.i(TOAST_TAG,"on createPeerConnection " + " addStreamToLocalPeer");
         MediaStream stream = peerConnectionFactory.createLocalMediaStream("102");
         stream.addTrack(localAudioTrack);
         localPeer.addStream(stream);
-    }
-
-    // Received remote peer's media stream. we will get the first video track and render it
-    private void gotRemoteStream(MediaStream stream) {
-        //we have remote video stream. add to the renderer.
-        AudioTrack audioTrack = stream.audioTracks.get(0);
-        Log.i(TOAST_TAG,"onAddStream : ongotRemoteStream");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Log.i(TOAST_TAG,"onAddStream : ongotRemoteStream");
-                    audioTrack.setEnabled(true);
-                   // AudioManager manager = new AudioManager();
-                    //manager.sta
-                    //audioTrack.
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
     }
 
     public void emitIceCandidate(IceCandidate iceCandidate) {
@@ -613,11 +609,6 @@ public class ActiveRoomActivity extends AppCompatActivity {
         }
     }
 
-    public void onRemoteHangUp(String msg) {
-        Toast.makeText(getBaseContext(), "Remote Peer hungup", Toast.LENGTH_LONG).show();
-        hangup();
-    }
-
     //Emitter.Listener
     private Emitter.Listener onRefresh = new Emitter.Listener() {
         @Override
@@ -692,6 +683,7 @@ public class ActiveRoomActivity extends AppCompatActivity {
                     LeaveRoomResponse response = gson.fromJson(args[0].toString(), LeaveRoomResponse.class);
                     Log.i(TOAST_TAG, CHANNEL_ROOM_LEAVE_ERROR + " : " + response.getMessage() + "");
                     Toast.makeText(getBaseContext(), response.getMessage() + "", Toast.LENGTH_LONG).show();
+
                 }
             });
         }
@@ -735,7 +727,12 @@ public class ActiveRoomActivity extends AppCompatActivity {
                             .setNegativeButton("Okey", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
+                                    hangup();
+                                    Intent intent = new Intent(getBaseContext() , HomeActivity.class);
+                                    intent.putExtra("accessToken" , accessToken);
+                                    startActivity(intent);
                                     finish();
+
                                 }
                             }).show();
                 }
@@ -760,7 +757,10 @@ public class ActiveRoomActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     Log.i(TOAST_TAG, args[0].toString() + "");
-                    roomInfoViewModel.setEndRoom(accessToken, data);
+                    hangup();
+                    Intent intent = new Intent(getBaseContext() , HomeActivity.class);
+                    intent.putExtra("accessToken" , accessToken);
+                    startActivity(intent);
                     finish();
                 }
             });
@@ -796,27 +796,6 @@ public class ActiveRoomActivity extends AppCompatActivity {
             }
         }
     };
-
-    /*webRTC
-    private Emitter.Listener onRemoteHangUp= new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.i(TOAST_TAG,"from remote hangUp : "+args[0].toString()+"");
-                    try {
-                        JSONObject jsonObject = (JSONObject) args[0];
-                        Toast.makeText(getBaseContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-                        hangup();
-                    }catch (JSONException e){
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-        }
-    };*/
 
     private Emitter.Listener onStartCall = new Emitter.Listener() {
         @Override

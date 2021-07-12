@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -21,12 +22,12 @@ public class RoomAudienceAdabter extends RecyclerView.Adapter<RoomAudienceAdabte
    // AudienceViewModel data;
     Context context;
     LayoutInflater inflater;
+    OnItemClickListenerAudience onItemClickListener;
 
-
-
-    public RoomAudienceAdabter(ArrayList<AudienceList> data, Context context) {
+    public RoomAudienceAdabter(ArrayList<AudienceList> data, Context context , OnItemClickListenerAudience onItemClickListener) {
         this.data = data;
         this.context = context;
+        this.onItemClickListener = onItemClickListener;
     }
 
     public void setAudienceList(ArrayList<AudienceList> audienceList){
@@ -48,6 +49,12 @@ public class RoomAudienceAdabter extends RecyclerView.Adapter<RoomAudienceAdabte
     @Override
     public void onBindViewHolder(@NonNull RoomAudienceHolder holder, int position) {
         holder.bind(data.get(position));
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onItemClickListener.onItemClickAudience(data.get(position));
+            }
+        });
     }
 
 
@@ -63,13 +70,10 @@ public class RoomAudienceAdabter extends RecyclerView.Adapter<RoomAudienceAdabte
         public RoomAudienceHolder(@NonNull AudienceListItemsBinding audienceListItemsBinding) {
             super(audienceListItemsBinding.getRoot());
             this.audienceListItemsBinding = audienceListItemsBinding;
-           // this.audienceListItemsBinding.setViewModel(data);
         }
 
         void bind(AudienceList audienceList) {
             Glide.with(context).load(audienceList.getUser_image()).into(audienceListItemsBinding.memberImageView);
-          /*  Uri imageUrl = Uri.parse(audienceList.getUser_image());
-            audienceListItemsBinding.memberImageView.setImageURI(imageUrl);*/
             Log.i("Audience : " ,   audienceList.getUser_image() + "" );
             Log.i("Audience : " ,  audienceList.getUser_name() + "" );
             audienceListItemsBinding.memberName.setText(audienceList.getUser_name());

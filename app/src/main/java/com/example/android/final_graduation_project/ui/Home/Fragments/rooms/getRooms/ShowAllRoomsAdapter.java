@@ -88,11 +88,17 @@ public class ShowAllRoomsAdapter extends RecyclerView.Adapter<ShowAllRoomsAdapte
             int total = getRooms.getAudience() + getRooms.getSpeakers();
             if(total == 1) {
                 roomsListItemsBinding.member1.setText(getRooms.getMembers().get(0).getUser_name());
+                roomsListItemsBinding.member2.setVisibility(View.GONE);
+                roomsListItemsBinding.member3.setVisibility(View.GONE);
+                roomsListItemsBinding.roomImageMember2.setVisibility(View.GONE);
+                roomsListItemsBinding.roomImageMember3.setVisibility(View.GONE);
                 Glide.with(context).load(getRooms.getMembers().get(0).getUser_image()).into(roomsListItemsBinding.roomImageMember1);
                 //Glide.with(context).load("http://mufix.org/uploads/users/default-user.png").into(roomsListItemsBinding.roomImageMember1);
             }else if(total == 2){
                 roomsListItemsBinding.member1.setText(getRooms.getMembers().get(0).getUser_name());
                 roomsListItemsBinding.member2.setText(getRooms.getMembers().get(1).getUser_name());
+                roomsListItemsBinding.member3.setVisibility(View.GONE);
+                roomsListItemsBinding.roomImageMember3.setVisibility(View.GONE);
                 Glide.with(context).load(getRooms.getMembers().get(0).getUser_image()).into(roomsListItemsBinding.roomImageMember1);
                 Glide.with(context).load(getRooms.getMembers().get(1).getUser_image()).into(roomsListItemsBinding.roomImageMember2);
             }else{

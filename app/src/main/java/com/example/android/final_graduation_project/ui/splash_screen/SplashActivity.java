@@ -1,11 +1,14 @@
 package com.example.android.final_graduation_project.ui.splash_screen;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
@@ -22,6 +25,9 @@ import me.relex.circleindicator.CircleIndicator;
 
 public class SplashActivity extends AppCompatActivity {
     private static int NUM_PAGER = 4;
+    private String recordPermission = Manifest.permission.RECORD_AUDIO;
+    //private String MicPermission = Manifest.permission.M;
+    private int permissionCode = 21;
     private ScreenSlidePagerAdapter PagerAdapter;
     ImageView constraintLayout ;
     TextView logo , title;
@@ -37,6 +43,7 @@ public class SplashActivity extends AppCompatActivity {
         PagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
         pager.setAdapter(PagerAdapter);
         circleIndicator.setViewPager(pager);
+        checkPermission();
     }
 
     private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
@@ -67,6 +74,15 @@ public class SplashActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             return NUM_PAGER;
+        }
+    }
+    private boolean checkPermission() {
+
+        if (ActivityCompat.checkSelfPermission(getBaseContext(), recordPermission) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{recordPermission}, permissionCode);
+            return false;
         }
     }
 }

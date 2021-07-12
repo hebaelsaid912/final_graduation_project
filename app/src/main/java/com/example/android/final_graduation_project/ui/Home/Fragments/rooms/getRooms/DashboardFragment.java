@@ -99,10 +99,14 @@ public class DashboardFragment extends Fragment {
         dashboardViewModel = new ViewModelProvider(this).get(DashboardViewModel.class);
         dashboardViewModel.getRoom(accessToken);
         dashboardBinding.executePendingBindings();
+        dashboardBinding.emptyViewRooms.setVisibility(View.GONE);
+        //dashboardBinding.getRoomsRv.setVisibility(View.GONE);
+        dashboardBinding.shimmerEffectRooms.setVisibility(View.VISIBLE);
         dashboardBinding.refreshGetRooms.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 dashboardViewModel.getRoom(accessToken);
+                dashboardBinding.emptyViewRooms.setVisibility(View.GONE);
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -117,7 +121,7 @@ public class DashboardFragment extends Fragment {
             public void onClick(View view) {
                 createRoomFragment = CreateRoomFragment.newInstance(accessToken);
                 createRoomFragment.show(requireActivity().getSupportFragmentManager(), null);
-                dashboardViewModel.getRoom(accessToken);
+              //  dashboardViewModel.getRoom(accessToken);
             }
         });
 
@@ -143,14 +147,8 @@ public class DashboardFragment extends Fragment {
                                     data.put(ARG_ROOM_ID , roomID);
                                     Log.i(TOAST_TAG , accessToken + "");
                                     Log.i(TOAST_TAG , roomID + "");
-                                    JSONObject jsonObject = new JSONObject();
-                                    try {
-                                        jsonObject.put("roomId",roomID);
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
                                     dashboardViewModel.join_Room(accessToken,data);
-                                    getRoomsSocket.emit(CHANNEL_REQUSTE_TO_JOIN_ROOM , jsonObject.toString());
+
                                 }
                             });
 
@@ -160,20 +158,22 @@ public class DashboardFragment extends Fragment {
                             LinearLayoutManager layoutManager
                                     = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
                             dashboardBinding.getRoomsRv.setLayoutManager(layoutManager);
-                        /*    dashboardBinding.refreshGetRooms.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                                @Override
-                                public void onRefresh() {
-                                   showAllRoomsAdapter.updateList(dashboardViewModel.getRoomsMutableLiveData.getValue().getRooms());
-                                   showAllRoomsAdapter.notifyDataSetChanged();
-
-                                }
-                            });*/
 
 
                         }
                     }, 1500);
-
-               }else{}
+               }else{
+                    dashboardBinding.shimmerEffectRooms.setVisibility(View.VISIBLE);
+                    dashboardBinding.shimmerEffectRooms.startShimmer();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            dashboardBinding.shimmerEffectRooms.stopShimmer();
+                            dashboardBinding.shimmerEffectRooms.setVisibility(View.GONE);
+                            dashboardBinding.emptyViewRooms.setVisibility(View.VISIBLE);
+                        }
+                    },1500);
+                }
 
             }
         });
@@ -184,6 +184,13 @@ public class DashboardFragment extends Fragment {
                 if(dashboardViewModel.joinRoomMutableLiveData.getValue().getCode() != 403 ) {
                     Log.i(TOAST_TAG, "Joined : " + dashboardViewModel.joinRoomMutableLiveData.getValue().isJoined() + "");
                     Log.i(TOAST_TAG, "Message : " + dashboardViewModel.joinRoomMutableLiveData.getValue().getMessage() + "");
+                    JSONObject jsonObject = new JSONObject();
+                    try {
+                        jsonObject.put("roomId",roomID);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    getRoomsSocket.emit(CHANNEL_REQUSTE_TO_JOIN_ROOM , jsonObject.toString());
                    // Toast.makeText(getContext(), dashboardViewModel.joinRoomMutableLiveData.getValue().getMessage() + "", Toast.LENGTH_LONG).show();
                     //  dashboardBinding.getRoomsRv.notifyAll();
                 }else{
@@ -271,5 +278,9 @@ public class DashboardFragment extends Fragment {
         }
     };
 
-
+    @Override
+    public void onViewStateRestored(@Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        dashboardViewModel.getRoom(accessToken);
+    }
 }

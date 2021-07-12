@@ -51,18 +51,26 @@ public class CreateUserActivity extends AppCompatActivity {
                 String name = binding.createUserUserName.getEditText().getText().toString().trim() + "";
                 String username = binding.createUserUserUsername.getEditText().getText().toString().trim() + "";
                 if (!name.equals("") && !username.equals("")) {
-                    data = new HashMap<>();
-                    data.put("name", name);
-                    data.put("username", username);
-                    String apiToken =  "Bearer " + getIntent().getStringExtra(ARG_USER_TOKEN);
-                    String refreshToken = "Bearer " + getIntent().getStringExtra(ARG_USER_REFRESH_TOKEN);
-                    boolean hasAccount =  getIntent().getBooleanExtra(ARG_USER_HAS_ACCOUNT, true);
-                    Log.i(TOAST_TAG, "accessToken : " + apiToken);
-                    Log.i(TOAST_TAG, "refreshToken : " + refreshToken);
-                    Log.i(TOAST_TAG, "accoutVerifying : " + hasAccount);
-                    createUserViewModel.setUser(data,apiToken);
-                    binding.waitToCreateNewUser.setVisibility(View.VISIBLE);
-
+                    if(name.length() > 3 && username.length() > 3) {
+                        data = new HashMap<>();
+                        data.put("name", name);
+                        data.put("username", username);
+                        data.put("avatar", "");
+                        data.put("instagram", "");
+                        data.put("twitter", "");
+                        data.put("bio", "");
+                        String apiToken = "Bearer " + getIntent().getStringExtra(ARG_USER_TOKEN);
+                        String refreshToken = "Bearer " + getIntent().getStringExtra(ARG_USER_REFRESH_TOKEN);
+                        boolean hasAccount = getIntent().getBooleanExtra(ARG_USER_HAS_ACCOUNT, true);
+                        Log.i(TOAST_TAG, "accessToken : " + apiToken);
+                        Log.i(TOAST_TAG, "refreshToken : " + refreshToken);
+                        Log.i(TOAST_TAG, "accoutVerifying : " + hasAccount);
+                        createUserViewModel.setUser(data, apiToken);
+                        binding.waitToCreateNewUser.setVisibility(View.VISIBLE);
+                    }else{
+                        Toast.makeText(getBaseContext(),
+                                "name and user name must be more than 3 char ", Toast.LENGTH_LONG).show();
+                    }
 
                 }else if(!name.equals("") && username.equals("")){
                     Toast.makeText(getBaseContext(), " username cann't be empty !", Toast.LENGTH_LONG).show();

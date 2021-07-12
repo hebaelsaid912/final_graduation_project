@@ -105,9 +105,14 @@ public class CreateRoomFragment extends DialogFragment {
             public void onClick(View view) {
                 String roomName = createRoomBinding.roomName.getEditText().getText().toString().trim();
                 if (!roomName.isEmpty()) {
-                    data = new HashMap<>();
-                    data.put("name", roomName);
-                    createRoomViewModel.startCreateRoom(accessToken, data);
+                    if(roomName.length()>3) {
+                        data = new HashMap<>();
+                        data.put("name", roomName);
+                        createRoomViewModel.startCreateRoom(accessToken, data);
+                    }else{
+                        Toast.makeText(getContext(),
+                                "room name must be more than 3 char ", Toast.LENGTH_LONG).show();
+                    }
                 } else {
                     Toast.makeText(getContext(),
                             "room name cann't be empty ", Toast.LENGTH_LONG).show();

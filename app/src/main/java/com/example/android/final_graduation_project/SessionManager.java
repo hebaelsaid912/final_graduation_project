@@ -60,10 +60,10 @@ public class SessionManager {
         editor.clear();
         Log.i("Intro from logout : ", userSession.getString(KEY_ACCESS_TOKEN, null));
         Log.i("Intro from logout : ", userSession.getString(KEY_REFRESH_TOKEN, null));
-        Log.i("Intro from logout : ", userSession.getString(KEY_HASACCOUNT, null));
+        Log.i("Intro from logout : ", userSession.getBoolean(KEY_HASACCOUNT, false)+"");
         editor.commit();
-        Log.i("Intro from logout : ", userSession.getString(KEY_ACCESS_TOKEN, null));
-        Log.i("Intro from logout : ", userSession.getString(KEY_REFRESH_TOKEN, null));
-        Log.i("Intro from logout : ", userSession.getString(KEY_HASACCOUNT, null));
+        Log.i("Intro from logout : ", userSession.getString(KEY_ACCESS_TOKEN, null)+"");
+        Log.i("Intro from logout : ", userSession.getString(KEY_REFRESH_TOKEN, null)+"");
+        Log.i("Intro from logout : ", userSession.getBoolean(KEY_HASACCOUNT, false)+"");
     }
 }

@@ -5,8 +5,6 @@
         <item></item>
         <item>DashBoard</item>
         <item>Profile</item>
-        <item>Active Rooms</item>
-        <item>Followers Active Rooms</item>
         <item>Setting</item>
         <item>About Us</item>
         <item/>
@@ -17,8 +15,6 @@
         <item/>
         <item>@drawable/dashboard_icon</item>
         <item>@drawable/profile_icon</item>
-        <item>@drawable/rooms_active_now_icon</item>
-        <item>@drawable/follower_active_rooms_icon</item>
         <item>@drawable/settings_icon</item>
         <item>@drawable/about_us_icon</item>
         <item/>
